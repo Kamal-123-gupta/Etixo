@@ -1,11 +1,11 @@
-# 🎟️ Agentic AI for Intelligent Event Discovery & Ticket Booking Platform
+# Agentic AI for Intelligent Event Discovery & Ticket Booking Platform
 
 > A 9-agent, AI-native reimagining of event discovery and ticket booking — where autonomous agents personalize discovery, automate organizer workflows, optimize pricing and marketing, and protect the platform from fraud, instead of relying on static, rule-based ticketing systems.
 
 
 ---
 
-## 📌 Table of Contents
+## Table of Contents
 
 1. [Project Overview](#-project-overview)
 2. [Problem Statement](#-problem-statement)
@@ -23,9 +23,8 @@
 14. [Environment Variables](#-environment-variables)
 15. [Future Improvements](#-future-improvements)
 16. [Project Roadmap](#-project-roadmap)
-17. [Contributors](#-contributors)
-18. [License](#-license)
-19. [Acknowledgements](#-acknowledgements)
+
+
 
 ---
 
