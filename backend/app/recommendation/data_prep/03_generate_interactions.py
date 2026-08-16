@@ -60,10 +60,20 @@ def generate_interactions(users: pd.DataFrame, events: pd.DataFrame) -> pd.DataF
 
     for _, user in users.iterrows():
         n_candidates = int(RNG.integers(*VIEWS_PER_USER))
-        # candidate pool: weighted sample so higher-affinity events are more
-        # likely to be "shown", mirroring a recs surface feeding the user
-        # events it thinks they'll like -- plus a little exploration noise
-        sample_pool = events.sample(min(len(events), n_candidates * 4), random_state=int(RNG.integers(1e9)))
+
+        # Stratified candidate pool: draw evenly ACROSS categories first, so
+        # a user's own affinity -- not the catalog's raw category mix
+        # (this catalog is ~79% football) -- determines what they end up
+        # interacting with. Sampling directly from the full catalog here
+        # would flood every user's candidates with football regardless of
+        # their preferences, before affinity weighting even gets a say.
+        per_category_n = max(3, (n_candidates * 4) // max(1, events["category"].nunique()))
+        pool_parts = [
+            grp.sample(min(len(grp), per_category_n), random_state=int(RNG.integers(1e9)))
+            for _, grp in events.groupby("category")
+        ]
+        sample_pool = pd.concat(pool_parts, ignore_index=True)
+
         scores = sample_pool.apply(lambda ev: affinity_score(user, ev), axis=1)
         probs = (scores + 0.05) / (scores + 0.05).sum()
         chosen = sample_pool.sample(
