@@ -1,0 +1,501 @@
+user_id,name,home_city,home_state,home_country,preferred_categories,budget_max,signup_days_ago
+1,Vivaan Khan,Jacksonville,FL,US,baseball|basketball,109.95,104
+2,Diya Nair,Arlington,TX,US,basketball,123.25,298
+3,Kabir Nair,Flushing,NY,US,hockey,108.62,184
+4,Zoya Nair,Arlington,TX,US,hockey|basketball,96.63,79
+5,Priya Sharma,Arlington,TX,US,basketball,148.73,52
+6,Riley Nair,Arlington,TX,US,baseball,138.06,188
+7,Vivaan Gupta,Arlington,TX,US,hockey,144.57,353
+8,Zoya Brown,Landover,MD,US,baseball,138.59,242
+9,Sam Lee,Cleveland,OH,US,football,141.8,309
+10,Alex Reddy,Glendale,AZ,US,baseball|football,168.36,224
+11,Vivaan Chopra,Green Bay,WI,US,basketball,142.16,118
+12,Neel Lee,Minneapolis,MN,US,hockey,137.45,143
+13,Neel Nair,Arlington,TX,US,hockey|basketball,143.92,131
+14,Vivaan Lee,Arlington,TX,US,football,177.9,79
+15,Kunal Brown,Arlington,TX,US,hockey|football,136.43,308
+16,Jordan Garcia,Philadelphia,PA,US,basketball|hockey|baseball,190.52,90
+17,Sam Chopra,Minneapolis,MN,US,baseball,133.09,208
+18,Alex Sharma,Arlington,TX,US,basketball,178.59,353
+19,Sara Nair,Oxnard,CA,US,basketball,174.79,274
+20,Riley Verma,Oxnard,CA,US,baseball,151.24,152
+21,Kunal Khan,Detroit,MI,US,basketball|baseball,214.59,22
+22,Sara Brown,Los Angeles,CA,US,basketball|hockey,132.8,331
+23,Neel Johnson,Glendale,AZ,US,hockey,137.03,271
+24,Priya Lee,Kansas City,MO,US,basketball,172.12,6
+25,Rohan Iyer,West Sacramento,CA,US,hockey|basketball,73.0,71
+26,Ananya Khan,Los Angeles,CA,US,football,81.4,346
+27,Rohan Nair,Arlington,TX,US,hockey|baseball,88.38,74
+28,Sara Johnson,Arlington,TX,US,basketball,134.34,271
+29,Alex Garcia,Arlington,TX,US,baseball|hockey,113.2,36
+30,Sara Johnson,Tampa,FL,US,football,171.91,92
+31,Kabir Khan,Arlington,TX,US,basketball|baseball,139.94,226
+32,Vivaan Khan,Arlington,TX,US,hockey,194.88,334
+33,Ananya Chopra,Arlington,TX,US,hockey|football,186.64,167
+34,Morgan Iyer,Arlington,TX,US,baseball,164.2,229
+35,Aarav Johnson,Arlington,TX,US,football|basketball,121.67,255
+36,Riley Johnson,Arlington,TX,US,basketball|baseball,149.41,320
+37,Ananya Sharma,Nashville,TN,US,basketball,160.7,159
+38,Rohan Lee,Arlington,TX,US,football,162.39,207
+39,Diya Smith,Arlington,TX,US,hockey,171.37,33
+40,Zoya Brown,Kansas City,MO,US,football,167.42,160
+41,Neel Iyer,Arlington,TX,US,football|hockey,156.16,292
+42,Ananya Verma,Tampa,FL,US,football|baseball|hockey,166.94,110
+43,Sam Khan,Arlington,TX,US,basketball|hockey,148.33,48
+44,Ishaan Chopra,Arlington,TX,US,basketball|baseball,89.16,96
+45,Kunal Garcia,Arlington,TX,US,baseball,137.62,300
+46,Arjun Garcia,Atlanta,GA,US,basketball|hockey,110.08,51
+47,Kunal Gupta,Arlington,TX,US,football,207.27,206
+48,Neel Verma,Arlington,TX,US,football|baseball|hockey,124.31,216
+49,Kunal Reddy,East Rutherford,NJ,US,hockey,178.21,138
+50,Alex Iyer,Arlington,TX,US,baseball,73.96,77
+51,Vivaan Johnson,San Diego,CA,US,hockey,141.25,211
+52,Riley Verma,Inglewood,CA,US,football,144.93,183
+53,Alex Iyer,Denver,CO,US,football,158.12,307
+54,Ananya Gupta,Arlington,TX,US,football|hockey,97.25,322
+55,Kunal Johnson,Las Vegas,NV,US,hockey,197.15,26
+56,Ishaan Iyer,Glendale,AZ,US,baseball|basketball,148.03,189
+57,Rohan Johnson,West Sacramento,CA,US,football|baseball,133.72,233
+58,Ananya Nair,Arlington,TX,US,basketball,121.14,235
+59,Vivaan Johnson,Tampa,FL,US,hockey|basketball,170.27,220
+60,Jordan Khan,Houston,TX,US,football|hockey,141.49,263
+61,Arjun Sharma,Arlington,TX,US,football,120.34,125
+62,Ishaan Sharma,Arlington,TX,US,basketball,128.12,263
+63,Ishaan Patel,Arlington,TX,US,football,126.57,289
+64,Riley Brown,Arlington,TX,US,football|basketball,111.16,137
+65,Vivaan Verma,Arlington,TX,US,basketball,190.55,43
+66,Riley Johnson,Arlington,TX,US,baseball,146.06,312
+67,Vivaan Gupta,Arlington,TX,US,football|baseball|basketball,104.8,12
+68,Rohan Nair,Arlington,TX,US,hockey,182.38,266
+69,Rohan Johnson,Atlanta,GA,US,basketball|baseball|football,133.11,83
+70,Taylor Verma,Arlington,TX,US,hockey,141.07,62
+71,Ananya Brown,Cleveland,OH,US,baseball|football,149.43,97
+72,Alex Chopra,Inglewood,CA,US,basketball,129.7,175
+73,Jordan Patel,Detroit,MI,US,baseball,202.12,66
+74,Morgan Lee,Las Vegas,NV,US,hockey,152.62,89
+75,Arjun Brown,Boston,MA,US,football|baseball|basketball,127.28,15
+76,Sara Iyer,Cleveland,OH,US,hockey,146.91,333
+77,Taylor Brown,Indianapolis,IN,US,hockey|football,143.56,258
+78,Meera Gupta,Baltimore,MD,US,baseball|basketball,123.85,30
+79,Riley Lee,Flushing,NY,US,basketball,96.29,120
+80,Ishaan Chopra,Las Vegas,NV,US,basketball|hockey|football,81.83,160
+81,Taylor Brown,Nashville,TN,US,basketball,174.02,235
+82,Alex Khan,Arlington,TX,US,basketball|football|hockey,76.29,166
+83,Diya Sharma,Arlington,TX,US,baseball,129.8,268
+84,Morgan Nair,Charlotte,NC,US,baseball,118.07,149
+85,Morgan Reddy,Foxborough,MA,US,hockey|baseball,97.9,147
+86,Zoya Johnson,New Orleans,LA,US,baseball|hockey|football,121.78,27
+87,Sara Gupta,Los Angeles,CA,US,basketball|football,138.07,271
+88,Neel Gupta,Arlington,TX,US,hockey|basketball,168.16,170
+89,Priya Patel,Orchard Park,NY,US,basketball|football,132.09,37
+90,Alex Patel,Santa Clara,CA,US,baseball,138.1,170
+91,Taylor Patel,Cleveland,OH,US,basketball|baseball,109.43,138
+92,Alex Garcia,Miami,FL,US,basketball|baseball,137.7,314
+93,Kabir Chopra,Arlington,TX,US,hockey|baseball,101.98,139
+94,Kabir Iyer,Nashville,TN,US,hockey,114.46,157
+95,Jordan Lee,Landover,MD,US,hockey|basketball|baseball,201.79,103
+96,Kabir Khan,East Rutherford,NJ,US,basketball,141.33,180
+97,Sara Nair,Jacksonville,FL,US,basketball|football,97.45,28
+98,Taylor Gupta,Arlington,TX,US,football,107.59,173
+99,Meera Gupta,Los Angeles,CA,US,baseball|hockey,157.25,194
+100,Vivaan Chopra,Kansas City,MO,US,football|basketball,107.06,298
+101,Neel Iyer,Arlington,TX,US,football,110.63,133
+102,Zoya Khan,Arlington,TX,US,baseball,136.54,174
+103,Vivaan Lee,Detroit,MI,US,basketball,182.75,126
+104,Kabir Chopra,Santa Clara,CA,US,hockey,119.39,154
+105,Aarav Khan,Seattle,WA,US,hockey|baseball,136.21,289
+106,Riley Chopra,Arlington,TX,US,basketball,131.75,227
+107,Kabir Verma,Arlington,TX,US,basketball|hockey,94.85,179
+108,Arjun Verma,East Rutherford,NJ,US,hockey,142.73,300
+109,Kabir Iyer,Arlington,TX,US,football,107.08,10
+110,Taylor Sharma,Foxborough,MA,US,hockey,99.48,49
+111,Kabir Reddy,Nashville,TN,US,hockey,125.02,68
+112,Zoya Garcia,Pittsburgh,PA,US,football|hockey,152.47,78
+113,Kunal Patel,Foxborough,MA,US,hockey|baseball,89.13,282
+114,Diya Verma,Arlington,TX,US,football,147.48,101
+115,Taylor Lee,San Francisco,CA,US,hockey,152.26,361
+116,Ananya Lee,Arlington,TX,US,baseball|basketball,127.3,326
+117,Sara Patel,Jacksonville,FL,US,baseball,131.61,264
+118,Vivaan Khan,Arlington,TX,US,hockey|basketball,143.35,193
+119,Ananya Lee,Denver,CO,US,football,159.17,163
+120,Ananya Patel,Green Bay,WI,US,football|baseball|hockey,84.96,130
+121,Diya Sharma,Arlington,TX,US,basketball|football,119.65,250
+122,Jordan Iyer,Arlington,TX,US,football,169.62,261
+123,Taylor Garcia,Nashville,TN,US,baseball,53.77,188
+124,Sara Verma,Seattle,WA,US,baseball,196.44,72
+125,Meera Patel,Arlington,TX,US,football|basketball,138.33,166
+126,Rohan Johnson,Arlington,TX,US,baseball|hockey,146.3,63
+127,Ishaan Khan,Arlington,TX,US,hockey|football,133.06,351
+128,Sam Nair,Detroit,MI,US,football|basketball,150.92,20
+129,Kabir Reddy,Glendale,AZ,US,basketball,156.13,29
+130,Alex Sharma,Arlington,TX,US,baseball,176.27,290
+131,Alex Chopra,Inglewood,CA,US,hockey,162.22,100
+132,Taylor Brown,Nashville,TN,US,hockey|baseball,170.24,127
+133,Sam Nair,Nashville,TN,US,football|hockey,141.78,190
+134,Ishaan Iyer,Arlington,TX,US,baseball,107.09,106
+135,Arjun Lee,Oxnard,CA,US,basketball,91.72,117
+136,Ananya Verma,Baltimore,MD,US,baseball,146.77,26
+137,Meera Smith,Cincinnati,OH,US,hockey|basketball|baseball,177.45,274
+138,Arjun Chopra,Inglewood,CA,US,football|basketball,163.05,283
+139,Zoya Chopra,Detroit,MI,US,hockey,171.57,50
+140,Priya Iyer,Toronto,ON,Canada,basketball,131.87,281
+141,Kunal Gupta,Arlington,TX,US,hockey,122.71,39
+142,Zoya Brown,Bronx,NY,US,baseball|basketball,72.01,67
+143,Meera Nair,Arlington,TX,US,basketball,128.28,171
+144,Neel Johnson,East Rutherford,NJ,US,football|basketball|hockey,128.27,174
+145,Jordan Johnson,Glendale,AZ,US,hockey,205.75,297
+146,Jordan Nair,Orchard Park,NY,US,hockey|football,142.33,318
+147,Rohan Reddy,Indianapolis,IN,US,hockey,149.6,179
+148,Kabir Garcia,Arlington,TX,US,football,119.23,79
+149,Priya Chopra,Los Angeles,CA,US,baseball,205.78,267
+150,Meera Johnson,Canton,OH,US,hockey,137.8,94
+151,Rohan Garcia,Arlington,TX,US,hockey,125.15,196
+152,Alex Nair,Inglewood,CA,US,basketball,137.35,51
+153,Kunal Gupta,Denver,CO,US,hockey,102.5,153
+154,Diya Gupta,Arlington,TX,US,baseball,191.54,254
+155,Alex Verma,Arlington,TX,US,football,189.41,299
+156,Zoya Nair,Baltimore,MD,US,football|basketball|baseball,87.14,207
+157,Taylor Smith,Pittsburgh,PA,US,basketball,157.68,226
+158,Taylor Smith,Inglewood,CA,US,basketball,118.02,286
+159,Meera Lee,Las Vegas,NV,US,basketball|football,88.5,182
+160,Riley Johnson,Arlington,TX,US,basketball,118.14,137
+161,Diya Nair,Miami,FL,US,hockey|football,135.96,269
+162,Jordan Nair,Arlington,TX,US,football,180.93,245
+163,Priya Khan,Philadelphia,PA,US,hockey|football,134.18,191
+164,Meera Johnson,Arlington,TX,US,basketball,143.16,68
+165,Meera Khan,Inglewood,CA,US,basketball,136.68,178
+166,Priya Lee,Arlington,TX,US,baseball,115.49,93
+167,Jordan Gupta,Inglewood,CA,US,basketball,106.04,84
+168,Morgan Johnson,Arlington,TX,US,baseball,123.51,93
+169,Arjun Chopra,Arlington,TX,US,football,123.8,17
+170,Zoya Khan,Toronto,ON,Canada,hockey|baseball|football,124.19,123
+171,Alex Reddy,Arlington,TX,US,basketball,110.06,55
+172,Meera Reddy,Canton,OH,US,football,188.01,12
+173,Neel Iyer,Oxnard,CA,US,basketball|baseball|hockey,134.42,141
+174,Vivaan Patel,Arlington,TX,US,baseball|football,180.07,11
+175,Kunal Chopra,Atlanta,GA,US,basketball,140.19,75
+176,Riley Reddy,Arlington,TX,US,football,102.92,122
+177,Diya Reddy,Foxborough,MA,US,baseball,148.14,245
+178,Kabir Johnson,Arlington,TX,US,baseball,155.03,347
+179,Diya Garcia,Arlington,TX,US,baseball|basketball,143.69,112
+180,Morgan Brown,New Orleans,LA,US,football,107.4,97
+181,Meera Lee,Arlington,TX,US,hockey,104.29,306
+182,Meera Patel,Atlanta,GA,US,basketball|football,143.71,3
+183,Kunal Reddy,Arlington,TX,US,basketball,174.9,220
+184,Kabir Nair,Miami Gardens,FL,US,basketball|baseball,164.24,184
+185,Alex Chopra,Boston,MA,US,football,68.45,266
+186,Sara Garcia,Seattle,WA,US,football,174.26,347
+187,Sam Chopra,Canton,OH,US,baseball|basketball|football,179.36,351
+188,Taylor Nair,Arlington,TX,US,football|baseball,136.44,255
+189,Ishaan Reddy,Arlington,TX,US,hockey,179.46,92
+190,Sara Iyer,Arlington,TX,US,football,151.52,265
+191,Ishaan Lee,Arlington,TX,US,football,140.67,108
+192,Morgan Nair,Boston,MA,US,baseball|football,169.21,266
+193,Taylor Johnson,Denver,CO,US,baseball|hockey,129.06,263
+194,Neel Sharma,Arlington,TX,US,baseball,107.34,99
+195,Ishaan Brown,Oxnard,CA,US,basketball,154.86,26
+196,Neel Smith,Santa Clara,CA,US,hockey,64.26,23
+197,Ananya Nair,Arlington,TX,US,hockey|basketball|football,109.26,74
+198,Zoya Gupta,Miami,FL,US,basketball|football,134.5,19
+199,Diya Verma,Arlington,TX,US,baseball,136.56,292
+200,Morgan Gupta,Chicago,IL,US,football|basketball|hockey,142.44,314
+201,Morgan Smith,Orchard Park,NY,US,baseball,112.12,134
+202,Arjun Lee,Arlington,TX,US,hockey,152.06,90
+203,Jordan Reddy,Arlington,TX,US,hockey|basketball,154.23,113
+204,Kabir Sharma,Oxnard,CA,US,basketball|baseball,65.64,256
+205,Rohan Reddy,Arlington,TX,US,hockey|football|basketball,81.31,172
+206,Sara Brown,Foxborough,MA,US,football|hockey,104.41,157
+207,Sara Khan,Cleveland,OH,US,baseball,137.68,156
+208,Alex Reddy,Saint Petersburg,FL,US,hockey|basketball,107.19,77
+209,Morgan Johnson,Oxnard,CA,US,basketball|baseball,73.49,155
+210,Taylor Chopra,New Orleans,LA,US,basketball,113.23,208
+211,Sam Gupta,Arlington,TX,US,baseball,177.89,170
+212,Jordan Smith,Santa Clara,CA,US,basketball,173.2,327
+213,Morgan Patel,Atlanta,GA,US,baseball|basketball|football,87.95,27
+214,Jordan Gupta,Jacksonville,FL,US,hockey,118.65,194
+215,Zoya Smith,Denver,CO,US,hockey,168.69,341
+216,Taylor Patel,Arlington,TX,US,baseball,136.01,25
+217,Sam Khan,Arlington,TX,US,basketball,130.68,107
+218,Kabir Verma,Arlington,TX,US,hockey|baseball,177.62,131
+219,Diya Sharma,Glendale,AZ,US,basketball,147.04,109
+220,Neel Sharma,Indianapolis,IN,US,baseball,151.32,349
+221,Sara Garcia,Philadelphia,PA,US,basketball|football|hockey,165.84,272
+222,Alex Khan,Arlington,TX,US,hockey|baseball,164.54,97
+223,Rohan Lee,Arlington,TX,US,baseball,138.02,334
+224,Ishaan Khan,Arlington,TX,US,football,156.52,201
+225,Jordan Khan,Arlington,TX,US,basketball,129.4,270
+226,Sam Reddy,Arlington,TX,US,football,114.69,20
+227,Ishaan Chopra,Chicago,IL,US,hockey,115.72,40
+228,Priya Garcia,Arlington,TX,US,basketball,72.64,323
+229,Aarav Lee,Arlington,TX,US,baseball|hockey,114.23,193
+230,Taylor Khan,Arlington,TX,US,hockey,174.92,309
+231,Meera Sharma,Arlington,TX,US,hockey|baseball,160.27,167
+232,Diya Smith,Inglewood,CA,US,hockey|baseball,142.88,175
+233,Sam Patel,Newark,NJ,US,hockey,111.27,22
+234,Jordan Lee,Atlanta,GA,US,baseball|basketball|hockey,84.91,353
+235,Riley Brown,San Francisco,CA,US,football,127.23,96
+236,Vivaan Gupta,Arlington,TX,US,basketball|hockey,78.98,268
+237,Riley Garcia,Denver,CO,US,basketball|football,127.18,341
+238,Sam Lee,Arlington,TX,US,baseball,136.93,125
+239,Alex Chopra,Glendale,AZ,US,basketball,147.25,353
+240,Morgan Verma,Arlington,TX,US,hockey|basketball,178.85,134
+241,Ishaan Gupta,Tampa,FL,US,baseball,167.21,204
+242,Kabir Brown,East Rutherford,NJ,US,basketball,81.55,120
+243,Kabir Sharma,Arlington,TX,US,football,172.72,277
+244,Alex Lee,New Orleans,LA,US,baseball|hockey,128.72,34
+245,Diya Johnson,Arlington,TX,US,hockey,138.59,314
+246,Rohan Brown,Detroit,MI,US,baseball|hockey,147.24,45
+247,Jordan Gupta,Glendale,AZ,US,baseball,127.66,192
+248,Alex Nair,Arlington,TX,US,hockey,179.13,269
+249,Jordan Lee,Glendale,AZ,US,basketball,161.75,154
+250,Arjun Chopra,Arlington,TX,US,basketball|football,127.65,224
+251,Arjun Johnson,Nashville,TN,US,football|basketball|baseball,151.06,134
+252,Riley Gupta,Arlington,TX,US,basketball,106.83,162
+253,Taylor Verma,Arlington,TX,US,hockey,207.36,126
+254,Neel Nair,Tampa,FL,US,football|basketball,116.14,260
+255,Kunal Verma,Arlington,TX,US,football|baseball|hockey,150.71,232
+256,Ishaan Reddy,Glendale,AZ,US,baseball|hockey,137.93,101
+257,Vivaan Verma,Arlington,TX,US,baseball,150.64,295
+258,Kabir Smith,Phoenix,AZ,US,hockey|football,186.34,291
+259,Diya Nair,Philadelphia,PA,US,football|hockey,100.31,42
+260,Vivaan Johnson,Arlington,TX,US,baseball,159.22,227
+261,Neel Smith,Landover,MD,US,baseball|football|hockey,145.52,164
+262,Arjun Smith,Arlington,TX,US,hockey,148.3,253
+263,Meera Khan,Glendale,AZ,US,football|baseball,165.47,225
+264,Neel Sharma,Arlington,TX,US,baseball,145.76,182
+265,Riley Smith,Atlanta,GA,US,football,191.54,289
+266,Diya Smith,Chicago,IL,US,basketball,199.99,47
+267,Diya Verma,Arlington,TX,US,basketball|football,229.87,75
+268,Alex Nair,Arlington,TX,US,hockey,184.29,133
+269,Kabir Khan,Arlington,TX,US,football|hockey,153.56,176
+270,Kabir Sharma,Indianapolis,IN,US,basketball|baseball,96.03,362
+271,Riley Smith,Arlington,TX,US,football|basketball,85.1,78
+272,Zoya Lee,Las Vegas,NV,US,football,116.99,110
+273,Priya Nair,Inglewood,CA,US,basketball,196.72,342
+274,Kunal Iyer,Indianapolis,IN,US,basketball,149.86,170
+275,Jordan Gupta,Landover,MD,US,football,158.94,211
+276,Rohan Chopra,Detroit,MI,US,football,129.26,298
+277,Taylor Johnson,Arlington,TX,US,hockey|football|baseball,192.42,65
+278,Kabir Khan,Flushing,NY,US,baseball|basketball,172.48,189
+279,Ishaan Nair,Arlington,TX,US,football,115.8,290
+280,Sam Khan,Arlington,TX,US,hockey,109.25,248
+281,Aarav Lee,Arlington,TX,US,football|basketball|baseball,133.76,288
+282,Sara Chopra,Arlington,TX,US,football|baseball,136.04,161
+283,Priya Khan,Saint Petersburg,FL,US,hockey,180.02,57
+284,Riley Sharma,Minneapolis,MN,US,basketball|football|hockey,143.59,352
+285,Priya Verma,Arlington,TX,US,hockey|baseball,101.31,282
+286,Priya Reddy,Chicago,IL,US,football,115.77,196
+287,Kunal Sharma,Arlington,TX,US,hockey|baseball|football,149.39,359
+288,Ananya Johnson,Arlington,TX,US,basketball,82.23,238
+289,Kunal Iyer,Atlanta,GA,US,hockey,107.71,163
+290,Sara Iyer,Charlotte,NC,US,basketball,108.19,247
+291,Rohan Verma,New Orleans,LA,US,baseball|basketball|hockey,89.14,182
+292,Morgan Smith,Arlington,TX,US,football,192.34,311
+293,Diya Khan,Inglewood,CA,US,football|hockey,90.17,55
+294,Kabir Reddy,Inglewood,CA,US,baseball|hockey,218.08,247
+295,Meera Khan,Atlanta,GA,US,football|baseball,184.01,284
+296,Kunal Gupta,Arlington,TX,US,football|basketball,122.51,109
+297,Sam Khan,Arlington,TX,US,basketball|football,109.4,357
+298,Ananya Sharma,Arlington,TX,US,basketball|hockey,138.51,51
+299,Neel Patel,Arlington,TX,US,baseball|basketball,109.41,49
+300,Priya Khan,Nashville,TN,US,basketball|baseball,133.08,251
+301,Neel Nair,Inglewood,CA,US,football,199.38,66
+302,Vivaan Smith,Oxnard,CA,US,baseball,229.97,23
+303,Sara Khan,Philadelphia,PA,US,baseball,153.73,123
+304,Diya Gupta,Detroit,MI,US,basketball|hockey,116.6,195
+305,Sam Iyer,Oxnard,CA,US,basketball,155.13,340
+306,Aarav Brown,Glendale,AZ,US,basketball|baseball,136.63,109
+307,Taylor Nair,Philadelphia,PA,US,football|basketball,239.41,277
+308,Kabir Chopra,Arlington,TX,US,basketball,186.63,123
+309,Zoya Patel,Washington,DC,US,basketball|baseball,125.35,262
+310,Alex Garcia,Foxborough,MA,US,basketball|hockey|football,162.62,99
+311,Priya Iyer,Arlington,TX,US,football,103.07,82
+312,Meera Sharma,Atlanta,GA,US,football,189.1,3
+313,Vivaan Chopra,Cincinnati,OH,US,football,109.4,140
+314,Sam Chopra,Arlington,TX,US,baseball,141.35,187
+315,Ishaan Chopra,Arlington,TX,US,baseball,202.36,23
+316,Arjun Patel,Cleveland,OH,US,basketball,161.69,97
+317,Zoya Johnson,Arlington,TX,US,hockey,95.0,72
+318,Ishaan Johnson,Boston,MA,US,basketball|baseball,161.97,161
+319,Alex Smith,Arlington,TX,US,baseball|hockey,153.67,255
+320,Ishaan Patel,Arlington,TX,US,baseball,72.2,267
+321,Jordan Verma,Arlington,TX,US,football|hockey,138.31,234
+322,Neel Nair,Arlington,TX,US,hockey|football,132.0,129
+323,Meera Lee,Pittsburgh,PA,US,football,126.5,194
+324,Ishaan Johnson,Arlington,TX,US,baseball|football,111.27,166
+325,Priya Iyer,Arlington,TX,US,hockey|football|baseball,143.87,189
+326,Priya Johnson,St. Louis,MO,US,football,195.66,253
+327,Arjun Johnson,San Francisco,CA,US,hockey,108.37,5
+328,Sam Garcia,Arlington,TX,US,hockey|basketball|football,122.7,96
+329,Priya Johnson,Arlington,TX,US,basketball,212.31,61
+330,Diya Sharma,Glendale,AZ,US,basketball|football,161.57,255
+331,Alex Smith,Milwaukee,WI,US,football,148.91,164
+332,Taylor Lee,Arlington,TX,US,football|basketball,131.57,336
+333,Priya Gupta,Glendale,AZ,US,football,131.16,56
+334,Arjun Garcia,Arlington,TX,US,baseball|football,149.37,209
+335,Kabir Khan,Jacksonville,FL,US,football|basketball,179.08,214
+336,Alex Nair,Arlington,TX,US,baseball,124.56,66
+337,Arjun Smith,Arlington,TX,US,hockey,126.0,59
+338,Rohan Verma,Arlington,TX,US,basketball,156.21,42
+339,Kabir Iyer,Tampa,FL,US,baseball,101.08,273
+340,Kunal Nair,Charlotte,NC,US,hockey,158.51,311
+341,Arjun Iyer,Detroit,MI,US,baseball,154.69,232
+342,Rohan Lee,Glendale,AZ,US,basketball,151.0,215
+343,Sam Chopra,Arlington,TX,US,hockey,144.16,115
+344,Ishaan Reddy,Arlington,TX,US,baseball|football,142.57,344
+345,Kabir Sharma,Green Bay,WI,US,baseball|basketball|hockey,151.31,97
+346,Meera Reddy,Arlington,TX,US,basketball,114.21,5
+347,Meera Smith,Green Bay,WI,US,hockey,117.56,60
+348,Meera Garcia,Arlington,TX,US,hockey|basketball,108.78,339
+349,Taylor Khan,Houston,TX,US,hockey|football,130.44,315
+350,Rohan Smith,Washington,DC,US,football|basketball,178.79,113
+351,Meera Lee,Inglewood,CA,US,basketball|hockey|football,93.48,68
+352,Morgan Garcia,Arlington,TX,US,football,142.15,108
+353,Ananya Gupta,Arlington,TX,US,hockey|football,99.05,279
+354,Meera Sharma,Arlington,TX,US,hockey|football,144.35,88
+355,Neel Garcia,Arlington,TX,US,hockey,149.56,303
+356,Kabir Chopra,Columbus,OH,US,basketball|hockey,169.61,352
+357,Sara Khan,Chicago,IL,US,hockey,107.94,80
+358,Alex Iyer,Indianapolis,IN,US,basketball,115.5,305
+359,Diya Gupta,Saint Petersburg,FL,US,baseball|hockey|football,152.02,133
+360,Alex Brown,Arlington,TX,US,football,162.3,7
+361,Alex Johnson,Arlington,TX,US,baseball|basketball|football,146.35,287
+362,Ishaan Nair,Arlington,TX,US,hockey,114.21,285
+363,Kabir Johnson,Washington,DC,US,basketball,143.34,284
+364,Sara Chopra,Oxnard,CA,US,baseball,112.43,196
+365,Morgan Gupta,Minneapolis,MN,US,hockey,120.55,344
+366,Vivaan Nair,Seattle,WA,US,football,107.04,199
+367,Aarav Brown,Buffalo,NY,US,baseball|basketball,149.93,253
+368,Meera Patel,Arlington,TX,US,baseball|football|hockey,100.19,297
+369,Rohan Patel,Minneapolis,MN,US,hockey,174.14,40
+370,Kunal Patel,Arlington,TX,US,hockey|basketball,150.01,71
+371,Neel Lee,Arlington,TX,US,basketball,163.59,203
+372,Kunal Iyer,Milwaukee,WI,US,hockey|baseball,122.59,351
+373,Priya Brown,East Rutherford,NJ,US,baseball,136.13,22
+374,Alex Smith,Arlington,TX,US,hockey|baseball|football,115.84,234
+375,Meera Garcia,Bronx,NY,US,hockey|football,106.24,361
+376,Vivaan Khan,Arlington,TX,US,baseball|basketball,149.77,169
+377,Kabir Sharma,Arlington,TX,US,baseball|hockey,159.66,239
+378,Sam Lee,Arlington,TX,US,hockey,148.55,300
+379,Diya Smith,Arlington,TX,US,football,166.78,217
+380,Alex Patel,Arlington,TX,US,basketball|baseball,143.81,141
+381,Ananya Verma,Bronx,NY,US,basketball|football,122.9,249
+382,Neel Sharma,Arlington,TX,US,basketball|football,184.03,54
+383,Diya Brown,Arlington,TX,US,football|baseball,136.78,136
+384,Ishaan Garcia,Arlington,TX,US,baseball|basketball,110.24,65
+385,Jordan Patel,Saint Petersburg,FL,US,hockey,128.64,274
+386,Kunal Verma,Las Vegas,NV,US,football,128.12,355
+387,Priya Brown,Las Vegas,NV,US,baseball|hockey,116.83,61
+388,Morgan Johnson,Arlington,TX,US,hockey,75.23,185
+389,Aarav Garcia,Arlington,TX,US,basketball|hockey,104.98,65
+390,Zoya Khan,New Orleans,LA,US,basketball,152.03,266
+391,Ishaan Patel,Kansas City,MO,US,hockey|basketball,172.55,311
+392,Riley Nair,Arlington,TX,US,basketball,191.32,151
+393,Sara Nair,Chicago,IL,US,baseball|hockey,86.8,229
+394,Ishaan Johnson,Chicago,IL,US,football,170.25,169
+395,Aarav Garcia,Arlington,TX,US,baseball|hockey,141.15,82
+396,Taylor Iyer,Landover,MD,US,baseball,139.81,246
+397,Jordan Verma,Baltimore,MD,US,basketball,185.48,262
+398,Kabir Nair,Arlington,TX,US,football,144.71,45
+399,Zoya Reddy,Arlington,TX,US,basketball,117.24,276
+400,Priya Chopra,Arlington,TX,US,football,151.08,15
+401,Kabir Iyer,Arlington,TX,US,football|basketball,123.01,45
+402,Sam Iyer,Arlington,TX,US,football,137.3,287
+403,Diya Smith,Arlington,TX,US,football|hockey,183.41,58
+404,Priya Smith,Detroit,MI,US,hockey|football,196.85,236
+405,Rohan Reddy,Charlotte,NC,US,football,133.35,282
+406,Ananya Lee,Arlington,TX,US,hockey|football,101.33,43
+407,Sara Verma,Green Bay,WI,US,hockey,60.55,293
+408,Sara Reddy,Inglewood,CA,US,baseball|hockey,114.53,92
+409,Morgan Verma,Arlington,TX,US,basketball|football|hockey,195.38,265
+410,Sam Garcia,Arlington,TX,US,baseball|football,188.29,312
+411,Aarav Smith,Arlington,TX,US,football,93.66,284
+412,Diya Verma,Orchard Park,NY,US,hockey,117.53,157
+413,Sara Iyer,Toronto,ON,Canada,football|hockey,81.86,232
+414,Sara Brown,Los Angeles,CA,US,basketball,105.93,171
+415,Kabir Johnson,Jacksonville,FL,US,baseball|football,127.52,83
+416,Arjun Reddy,Arlington,TX,US,hockey,129.7,79
+417,Ananya Garcia,Arlington,TX,US,football,120.64,198
+418,Diya Gupta,Arlington,TX,US,basketball|baseball,115.3,315
+419,Ananya Gupta,Arlington,TX,US,hockey,203.61,289
+420,Meera Lee,Arlington,TX,US,baseball,137.56,254
+421,Ananya Johnson,Oxnard,CA,US,hockey,142.26,228
+422,Riley Reddy,Green Bay,WI,US,hockey,180.18,269
+423,Sara Lee,Arlington,TX,US,football,136.57,303
+424,Sara Reddy,Orchard Park,NY,US,baseball|basketball,172.79,46
+425,Aarav Johnson,Indianapolis,IN,US,baseball|basketball|football,165.16,340
+426,Jordan Gupta,Arlington,TX,US,football|hockey|baseball,91.11,133
+427,Ishaan Johnson,Chicago,IL,US,football,142.16,218
+428,Riley Iyer,Miami,FL,US,basketball,106.72,343
+429,Sam Brown,San Francisco,CA,US,baseball|football|basketball,108.35,222
+430,Ishaan Reddy,Baltimore,MD,US,baseball,96.56,328
+431,Kabir Johnson,Arlington,TX,US,baseball,190.35,72
+432,Ananya Khan,Washington,DC,US,baseball|hockey,76.27,39
+433,Arjun Brown,Arlington,TX,US,basketball,77.3,19
+434,Arjun Brown,Arlington,TX,US,baseball,90.54,347
+435,Ananya Sharma,Saint Petersburg,FL,US,hockey|football,101.96,336
+436,Sam Lee,East Rutherford,NJ,US,hockey|baseball,130.8,243
+437,Sara Chopra,Arlington,TX,US,baseball,129.22,176
+438,Ananya Sharma,Arlington,TX,US,basketball,163.9,207
+439,Jordan Gupta,Arlington,TX,US,football|baseball|basketball,128.29,217
+440,Diya Johnson,Arlington,TX,US,football,101.86,211
+441,Kunal Khan,Arlington,TX,US,basketball|hockey|football,148.05,344
+442,Priya Verma,Arlington,TX,US,basketball|baseball,204.11,22
+443,Ananya Nair,Arlington,TX,US,baseball,144.66,25
+444,Rohan Verma,Arlington,TX,US,baseball,162.8,175
+445,Alex Gupta,East Rutherford,NJ,US,hockey|basketball,92.67,9
+446,Kunal Verma,Philadelphia,PA,US,hockey|baseball,120.08,17
+447,Kabir Verma,Kansas City,MO,US,football|basketball,142.68,195
+448,Zoya Brown,Arlington,TX,US,basketball,99.3,299
+449,Vivaan Reddy,Glendale,AZ,US,football,150.76,204
+450,Priya Khan,Inglewood,CA,US,baseball,109.27,55
+451,Kabir Lee,Arlington,TX,US,basketball,164.7,10
+452,Priya Khan,Minneapolis,MN,US,hockey|football,143.1,17
+453,Arjun Iyer,Flushing,NY,US,basketball,108.23,36
+454,Rohan Chopra,Nashville,TN,US,hockey,122.42,185
+455,Meera Verma,Minneapolis,MN,US,baseball|hockey,142.92,296
+456,Aarav Garcia,Miami Gardens,FL,US,hockey,173.76,229
+457,Vivaan Reddy,San Francisco,CA,US,hockey,133.93,226
+458,Taylor Nair,Arlington,TX,US,football|basketball|baseball,126.55,110
+459,Alex Sharma,Arlington,TX,US,baseball|football,165.81,234
+460,Kunal Khan,Kansas City,MO,US,baseball,120.52,305
+461,Priya Garcia,San Jose,CA,US,football|basketball,112.88,189
+462,Ishaan Brown,Arlington,TX,US,football,140.87,65
+463,Jordan Johnson,Miami Gardens,FL,US,football|baseball,76.39,95
+464,Morgan Lee,Atlanta,GA,US,hockey|football|baseball,135.23,191
+465,Alex Garcia,Arlington,TX,US,basketball,139.15,263
+466,Diya Khan,Arlington,TX,US,hockey,133.99,145
+467,Alex Brown,Arlington,TX,US,baseball|basketball,195.05,129
+468,Ishaan Lee,Arlington,TX,US,basketball|baseball,157.49,57
+469,Kunal Iyer,New Orleans,LA,US,basketball,133.96,170
+470,Sam Johnson,Cincinnati,OH,US,baseball,152.75,360
+471,Rohan Lee,Houston,TX,US,football|baseball,169.68,341
+472,Zoya Lee,Nashville,TN,US,baseball,119.89,167
+473,Kabir Garcia,Philadelphia,PA,US,football|baseball,171.98,287
+474,Arjun Garcia,Atlanta,GA,US,hockey|football,187.99,98
+475,Sam Verma,Arlington,TX,US,basketball,141.64,164
+476,Kunal Iyer,Jacksonville,FL,US,football|hockey,131.84,152
+477,Jordan Gupta,Arlington,TX,US,baseball,168.2,162
+478,Sam Reddy,Arlington,TX,US,baseball|football,166.84,116
+479,Taylor Smith,Inglewood,CA,US,basketball|baseball,104.36,247
+480,Zoya Brown,New Orleans,LA,US,hockey,108.14,77
+481,Taylor Lee,Arlington,TX,US,basketball,131.68,244
+482,Kabir Brown,Arlington,TX,US,hockey|basketball,138.79,117
+483,Ananya Nair,Atlanta,GA,US,hockey,145.27,325
+484,Jordan Sharma,Landover,MD,US,football,159.22,258
+485,Kabir Gupta,Glendale,AZ,US,basketball,150.91,285
+486,Meera Chopra,Arlington,TX,US,baseball,116.09,224
+487,Alex Nair,Arlington,TX,US,hockey|football,140.09,24
+488,Sara Smith,East Rutherford,NJ,US,basketball|baseball,165.56,85
+489,Ishaan Smith,Glendale,AZ,US,baseball,173.69,81
+490,Sara Patel,New Orleans,LA,US,basketball,148.3,26
+491,Zoya Verma,Arlington,TX,US,football|basketball,117.26,224
+492,Rohan Lee,Arlington,TX,US,basketball,83.75,163
+493,Morgan Smith,Arlington,TX,US,football,202.14,222
+494,Aarav Nair,Arlington,TX,US,hockey|baseball,170.86,227
+495,Alex Johnson,Cincinnati,OH,US,baseball,136.39,259
+496,Ishaan Johnson,Arlington,TX,US,hockey|baseball,137.44,227
+497,Alex Khan,Oxnard,CA,US,football,121.14,229
+498,Diya Nair,Las Vegas,NV,US,baseball|football|hockey,140.13,196
+499,Kunal Lee,Arlington,TX,US,baseball,177.14,197
+500,Rohan Brown,Los Angeles,CA,US,basketball,157.04,45

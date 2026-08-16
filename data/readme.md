@@ -1,0 +1,1 @@
+The raw data is not been pushed, to use the raw data use the kaggle dataset we are using to run the data prep files.
