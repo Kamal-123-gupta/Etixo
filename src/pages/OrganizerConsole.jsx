@@ -1,5 +1,6 @@
-import React, { useContext, useState, useMemo } from 'react';
+import React, { useContext, useState, useMemo, useEffect  } from 'react';
 import { AppContext } from '../context/AppContext';
+import { generateEventContent, generateAndApplyEventContent, fetchOrganizerInsights } from '../lib/api';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -12,6 +13,42 @@ import {
 export default function OrganizerConsole() {
   const { events, marketingCampaigns, addCustomEvent, triggerMarketingCampaign } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState('insights');
+  const [organizerInsights, setOrganizerInsights] = useState(null);
+  const [insightsLoading, setInsightsLoading] = useState(true);
+  const [insightsError, setInsightsError] = useState(null);
+  useEffect(() => {
+  let cancelled = false;
+
+  const loadInsights = async () => {
+      try {
+        const data = await fetchOrganizerInsights();
+
+        if (!cancelled) {
+          setOrganizerInsights(data);
+          setInsightsError(null);
+        }
+      } catch (error) {
+        console.error("Failed to load organizer insights:", error);
+
+        if (!cancelled) {
+          setInsightsError(error);
+        }
+      } finally {
+        if (!cancelled) {
+          setInsightsLoading(false);
+        }
+      }
+    };
+
+    loadInsights();
+
+    const interval = setInterval(loadInsights, 10000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   // Event Creator Form States
   const [newTitle, setNewTitle] = useState('');
@@ -45,25 +82,29 @@ export default function OrganizerConsole() {
   }, [opsTasks]);
 
   // Aggregate stats
-  const totalRevenue = useMemo(() => {
-    return events.reduce((sum, e) => sum + (e.ticketsSold * e.price), 0);
-  }, [events]);
+  // const totalRevenue = useMemo(() => {
+  //   return events.reduce((sum, e) => sum + (e.ticketsSold * e.price), 0);
+  // }, [events]);
 
-  const totalTicketsSold = useMemo(() => {
-    return events.reduce((sum, e) => sum + e.ticketsSold, 0);
-  }, [events]);
+  const totalRevenue = organizerInsights?.total_revenue ?? 0;
+
+  // const totalTicketsSold = useMemo(() => {
+  //   return events.reduce((sum, e) => sum + e.ticketsSold, 0);
+  // }, [events]);
+
+  const totalTicketsSold = organizerInsights?.total_tickets_sold ?? 0;
 
   // Charts Data Prep
   const salesVelocityData = useMemo(() => {
-    // Generate simulated timeline sales velocity based on current state
-    return [
-      { name: '10:00 AM', velocity: Math.round(totalTicketsSold * 0.1) },
-      { name: '12:00 PM', velocity: Math.round(totalTicketsSold * 0.25) },
-      { name: '02:00 PM', velocity: Math.round(totalTicketsSold * 0.55) },
-      { name: '04:00 PM', velocity: Math.round(totalTicketsSold * 0.8) },
-      { name: '06:00 PM', velocity: totalTicketsSold },
-    ];
-  }, [totalTicketsSold]);
+    if (!organizerInsights?.events) return [];
+
+    return organizerInsights.events.map(event => ({
+      name: event.title.length > 18
+        ? `${event.title.substring(0, 18)}...`
+        : event.title,
+      velocity: event.velocity_last_7_days,
+    }));
+  }, [organizerInsights]);
 
   const categoryDistributionData = useMemo(() => {
     const map = {};
@@ -86,45 +127,109 @@ export default function OrganizerConsole() {
   const COLORS = ['#a855f7', '#6366f1', '#10b981', '#f59e0b', '#ec4899'];
 
   // AI draft generator triggers
-  const handleAIDraft = () => {
-    if (!newTitle) return;
-    setIsGeneratingAI(true);
-    setAiDraftPreview(null);
+  // const handleAIDraft = () => {
+  //   if (!newTitle) return;
+  //   setIsGeneratingAI(true);
+  //   setAiDraftPreview(null);
 
-    // Simulate Generative LLM delay
-    setTimeout(() => {
-      setIsGeneratingAI(false);
-      setAiDraftPreview({
-        description: `This is a pre-drafted event description generated automatically for "${newTitle}". This is a ${newCategory} category event scheduled at ${newLocation}. It will host high-quality talks, network mixers, and interactive workshop breakout sessions.`,
-        faqs: [
-          { question: 'What is included in the ticket?', answer: 'Full access passes, lunch catering, and verified smart certificate tags.' },
-          { question: 'Is parking available?', answer: 'Yes, secure valet parking is integrated with registration validation.' }
-        ],
-        terms: [
-          'No transfers allowed within 24 hours of start.',
-          'Please present the QR code at checking terminals.'
-        ]
+  //   // Simulate Generative LLM delay
+  //   setTimeout(() => {
+  //     setIsGeneratingAI(false);
+  //     setAiDraftPreview({
+  //       description: `This is a pre-drafted event description generated automatically for "${newTitle}". This is a ${newCategory} category event scheduled at ${newLocation}. It will host high-quality talks, network mixers, and interactive workshop breakout sessions.`,
+  //       faqs: [
+  //         { question: 'What is included in the ticket?', answer: 'Full access passes, lunch catering, and verified smart certificate tags.' },
+  //         { question: 'Is parking available?', answer: 'Yes, secure valet parking is integrated with registration validation.' }
+  //       ],
+  //       terms: [
+  //         'No transfers allowed within 24 hours of start.',
+  //         'Please present the QR code at checking terminals.'
+  //       ]
+  //     });
+  //   }, 1500);
+  // };
+  const handleAIDraft = async () => {
+    if (!newTitle.trim()) return;
+
+    setIsGeneratingAI(true);
+    setAiDraftPreview(null);  
+
+    try {
+      const generated = await generateEventContent({
+        title: newTitle.trim(),
+        category: newCategory,
+        venue_city: newLocation || null,
+        venue_state: null,
+        base_price: Number(newBasePrice) || 0,
       });
-    }, 1500);
+
+      setAiDraftPreview({
+        description: generated.description || '',
+        faqs: generated.faqs || [],
+        terms: generated.terms || [],
+      });
+    } catch (error) {
+      console.error("AI event generation failed:", error);
+
+      setAiDraftPreview({
+        description: "Unable to generate event content right now.",
+        faqs: [],
+        terms: [],
+      });
+    } finally {
+      setIsGeneratingAI(false);
+    }
   };
 
-  const handlePublish = (e) => {
+  // const handlePublish = (e) => {
+  //   e.preventDefault();
+  //   if (!newTitle) return;
+
+  //   addCustomEvent({
+  //     title: newTitle,
+  //     category: newCategory,
+  //     basePrice: newBasePrice,
+  //     totalTickets: newTotalTickets,
+  //     location: newLocation,
+  //     image: newImage
+  //   });
+
+  //   // Reset Form
+  //   setNewTitle('');
+  //   setNewImage('');
+  //   setAiDraftPreview(null);
+  // };
+
+  const handlePublish = async (e) => {
     e.preventDefault();
-    if (!newTitle) return;
 
-    addCustomEvent({
-      title: newTitle,
-      category: newCategory,
-      basePrice: newBasePrice,
-      totalTickets: newTotalTickets,
-      location: newLocation,
-      image: newImage
-    });
+    if (!newTitle.trim()) return;
 
-    // Reset Form
-    setNewTitle('');
-    setNewImage('');
-    setAiDraftPreview(null);
+    try {
+      // Step 1: Create the actual event in the database
+      const createdEvent = await addCustomEvent({
+        title: newTitle.trim(),
+        category: newCategory,
+        basePrice: newBasePrice,
+        totalTickets: newTotalTickets,
+        location: newLocation,
+        image: newImage
+      });
+
+      // Step 2: Generate and persist AI content for that event
+      await generateAndApplyEventContent(createdEvent.id);
+
+      // Reset form only after both operations succeed
+      setNewTitle('');
+      setNewImage('');
+      setAiDraftPreview(null);
+
+      console.log(
+        `Event "${createdEvent.title}" published successfully with AI content.`
+      );
+    } catch (error) {
+      console.error("Failed to publish event:", error);
+    }
   };
 
   const handleLaunchCampaign = () => {
@@ -237,7 +342,7 @@ export default function OrganizerConsole() {
             
             {/* Sales velocity area chart */}
             <div className="bg-[#1f2028] border border-white/5 p-5 rounded-2xl space-y-4">
-              <h3 className="text-sm font-bold text-gray-300 font-mono uppercase tracking-wider">Ticket Sales Velocity (Today)</h3>
+              <h3 className="text-sm font-bold text-gray-300 font-mono uppercase tracking-wider">Ticket Sales Velocity (Last 7 Days)</h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={salesVelocityData}>

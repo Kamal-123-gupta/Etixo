@@ -9,7 +9,9 @@ import {
   updateUserPreferences,
   fetchMyBookings,
   postCreateBooking,
+  createEvent,
   logoutUser
+  
 } from '../lib/api';
 
 export const AppContext = createContext();
@@ -506,36 +508,46 @@ export const AppContextProvider = ({ children }) => {
     }, 1000);
   };
 
-  const addCustomEvent = (eventData) => {
-    const aiCopy = generateAICopy(eventData.title, eventData.category, eventData.location);
-    const newEvent = {
-      id: `ev-${Date.now()}`,
+  const addCustomEvent = async (eventData) => {
+  try {
+    const createdEvent = await createEvent({
       title: eventData.title,
-      description: aiCopy.description,
-      date: eventData.date,
-      time: eventData.time || '07:00 PM',
-      location: eventData.location,
+      description: eventData.description || null,
       category: eventData.category,
-      basePrice: Number(eventData.basePrice),
-      price: Number(eventData.basePrice),
-      totalTickets: Number(eventData.totalTickets),
-      ticketsSold: 0,
-      demand: 'Low',
-      riskFactor: 'Low',
-      image: eventData.image || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&auto=format&fit=crop&q=60',
-      faqs: aiCopy.faqs,
-      terms: aiCopy.terms
-    };
+      subcategory: eventData.subcategory || null,
+      event_datetime: eventData.date
+        ? `${eventData.date}T${eventData.time || "19:00"}:00`
+        : null,
+      venue_name: eventData.location || null,
+      venue_city: eventData.venue_city || null,
+      venue_state: eventData.venue_state || null,
+      venue_country: eventData.venue_country || null,
+      base_price: Number(eventData.basePrice) || 0,
+      total_tickets: Number(eventData.totalTickets) || 0,
+      image_url: eventData.image || null,
+    });
 
-    setEvents(prev => [newEvent, ...prev]);
-    triggerSystemNotification(`Event Creator: Created event "${newEvent.title}". AI successfully auto-generated event description, FAQs, and T&Cs.`, 'creation');
+    const updatedEvents = await fetchEvents();
+    setEvents(updatedEvents);
+
+    triggerSystemNotification(
+      `Event Creator: Created event "${createdEvent.title}".`,
+      'creation'
+    );
 
     setTimeout(() => {
-      triggerSystemNotification(`Operations Agent: Registered "${newEvent.title}". Automated event readiness checklist initialized.`, 'ops');
+      triggerSystemNotification(
+        `Operations Agent: Registered "${createdEvent.title}". Automated event readiness checklist initialized.`,
+        'ops'
+      );
     }, 1000);
 
-    return newEvent;
-  };
+    return createdEvent;
+  } catch (error) {
+    console.error("Failed to create event via API:", error);
+    throw error;
+  }
+};
 
   const clearUnreadNotifications = () => {
     setNotifications(prev => prev.map(n => ({ ...n, unread: false })));

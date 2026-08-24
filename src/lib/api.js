@@ -229,3 +229,26 @@ export function logoutUser() {
 }
 
 export { ApiError, formatLocation, formatDemandTier };
+
+export async function generateEventContent(payload) {
+  return apiFetch("/events/generate-content", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function createEvent(payload) {
+  return apiFetch("/events", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+export async function generateAndApplyEventContent(eventId) {
+  return apiFetch(`/events/${eventId}/generate-content`, {
+    method: "POST",
+  });
+}
+
+export async function fetchOrganizerInsights() {
+  return apiFetch("/organizer/insights");
+}
