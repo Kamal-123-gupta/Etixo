@@ -1,128 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { fetchEvents, ApiError } from '../lib/api';
 
 export const AppContext = createContext();
-
-const initialEvents = [
-  {
-    id: 'ev-1',
-    title: 'SustainTech Hackathon 2026',
-    description: 'A 48-hour global hackathon focused on building open-source AI solutions for carbon offset tracking and renewable energy distribution.',
-    date: '2026-08-20',
-    time: '09:00 AM',
-    location: 'Bengaluru, Tech Park',
-    category: 'Tech',
-    basePrice: 20,
-    price: 25,
-    totalTickets: 200,
-    ticketsSold: 145,
-    demand: 'High',
-    riskFactor: 'Low',
-    image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&auto=format&fit=crop&q=60',
-    faqs: [
-      { question: 'Who can participate?', answer: 'Anyone interested in sustainability and coding! Developers, designers, and domain experts are welcome.' },
-      { question: 'Is food provided?', answer: 'Yes, full catering is provided for all 48 hours of the event.' }
-    ],
-    terms: [
-      'Participants must bring their own laptops.',
-      'All code must be open-sourced on GitHub.',
-      'Refunds are available up to 7 days before the event.'
-    ]
-  },
-  {
-    id: 'ev-2',
-    title: 'Neon Pulse: Electronic Music Festival',
-    description: 'An immersive audio-visual electronic music experience featuring top international synthwave and techno artists with interactive laser grids.',
-    date: '2026-08-22',
-    time: '06:00 PM',
-    location: 'Mumbai, Dome Arena',
-    category: 'Music',
-    basePrice: 80,
-    price: 95,
-    totalTickets: 1000,
-    ticketsSold: 912,
-    demand: 'Surge',
-    riskFactor: 'Medium',
-    image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&auto=format&fit=crop&q=60',
-    faqs: [
-      { question: 'Is there an age limit?', answer: 'Yes, this event is strictly 18+.' },
-      { question: 'Will there be lockers available?', answer: 'Yes, locker rentals are available at the entrance.' }
-    ],
-    terms: [
-      'Valid physical ID required for entry.',
-      'No professional cameras allowed without a press pass.',
-      'Zero tolerance policy for illicit substances.'
-    ]
-  },
-  {
-    id: 'ev-3',
-    title: 'Improv Comedy Night: Unfiltered',
-    description: 'A hilarious evening of unscripted stand-up and games powered entirely by audience prompts and physical comedy.',
-    date: '2026-08-15',
-    time: '08:00 PM',
-    location: 'Delhi, The Laugh Club',
-    category: 'Comedy',
-    basePrice: 30,
-    price: 30,
-    totalTickets: 120,
-    ticketsSold: 45,
-    demand: 'Low',
-    riskFactor: 'Low',
-    image: 'https://images.unsplash.com/photo-1516280440614-37939bbacd6a?w=800&auto=format&fit=crop&q=60',
-    faqs: [
-      { question: 'Are drinks included?', answer: 'No, but drinks can be purchased at the venue bar.' }
-    ],
-    terms: [
-      'Seats are allocated on a first-come, first-served basis.',
-      'Please keep phones on silent during the show.'
-    ]
-  },
-  {
-    id: 'ev-4',
-    title: 'Global AI Summit 2026',
-    description: 'The premier annual gathering of AI researchers, developers, and tech executives discussing the future of agentic ecosystems and cognitive modeling.',
-    date: '2026-09-05',
-    time: '10:00 AM',
-    location: 'Bengaluru, Convention Center',
-    category: 'Tech',
-    basePrice: 150,
-    price: 150,
-    totalTickets: 500,
-    ticketsSold: 280,
-    demand: 'Medium',
-    riskFactor: 'Low',
-    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop&q=60',
-    faqs: [
-      { question: 'Will talks be recorded?', answer: 'Yes, all keynotes will be uploaded online post-summit.' }
-    ],
-    terms: [
-      'Badges must be worn at all times.',
-      'Registration transfers are allowed up to 48h prior.'
-    ]
-  },
-  {
-    id: 'ev-5',
-    title: 'Chiaroscuro: Modern Art Exhibition',
-    description: 'A showcase of high-contrast painting, light installations, and digital canvas displays by emerging contemporary visual artists.',
-    date: '2026-08-25',
-    time: '11:00 AM',
-    location: 'Pune, Creative Spaces',
-    category: 'Arts',
-    basePrice: 15,
-    price: 13,
-    totalTickets: 150,
-    ticketsSold: 30,
-    demand: 'Low',
-    riskFactor: 'Low',
-    image: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&auto=format&fit=crop&q=60',
-    faqs: [
-      { question: 'Can I buy the artwork?', answer: 'Yes, catalog purchases can be coordinated with the gallery staff.' }
-    ],
-    terms: [
-      'Do not touch any of the physical art pieces.',
-      'Flash photography is prohibited.'
-    ]
-  }
-];
 
 const initialCampaigns = [
   {
@@ -195,14 +74,24 @@ const initialNotifications = [
 ];
 
 export const AppContextProvider = ({ children }) => {
-  const [events, setEvents] = useState(initialEvents);
+  const [events, setEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [eventsError, setEventsError] = useState(null);
   const [bookings, setBookings] = useState([]);
+  // STILL MOCK: there's no login page yet (blocked on Kamal's auth work),
+  // so this is a placeholder profile, not a real logged-in user -- there's
+  // no real `id`, so personalized search/recommendations fall back to
+  // popularity ranking (see the `userProfile.id ?? undefined` check in
+  // AttendeePortal's search effect). `preferences`/`location` are updated
+  // here to match REAL catalog values (old ones were 'Tech'/'Music'/
+  // 'Bengaluru', none of which exist in the real sports dataset -- that
+  // silently made "Recommended for You" always empty).
   const [userProfile, setUserProfile] = useState({
     name: 'Jane Doe',
     email: 'jane.doe@gmail.com',
-    location: 'Bengaluru',
-    preferences: ['Tech', 'Music'],
-    budget: 120,
+    location: 'Arlington',
+    preferences: ['football'],
+    budget: 200,
     ticketTier: 'Gold'
   });
   const [fraudLogs, setFraudLogs] = useState(initialFraudLogs);
@@ -218,34 +107,65 @@ export const AppContextProvider = ({ children }) => {
     }
   ]);
 
-  // Dynamic Pricing Agent Simulation: Periodically fluctuates prices slightly to make UI feel alive
+  // Real backend wiring: load the actual event catalog from the DB instead
+  // of the hardcoded mock array. Deliberately does NOT fall back to mock
+  // data on failure -- the whole point of wiring is that what's shown is
+  // real DB state; silently falling back to fake data on an error would
+  // make backend outages invisible instead of surfacing them.
   useEffect(() => {
-    const interval = setInterval(() => {
-      setEvents((prevEvents) =>
-        prevEvents.map((evt) => {
-          if (evt.demand === 'Surge') {
-            // Price rises
-            const multiplier = 1 + (Math.random() * 0.05); // 0-5% increase
-            const newPrice = Math.round(evt.price * multiplier * 100) / 100;
-            if (newPrice !== evt.price) {
-              triggerSystemNotification(`Dynamic Pricing: "${evt.title}" price increased to $${newPrice} due to high demand.`, 'pricing');
-              return { ...evt, price: newPrice };
-            }
-          } else if (evt.demand === 'Low') {
-            // Price drops slightly to clear inventory
-            const multiplier = 1 - (Math.random() * 0.03); // 0-3% decrease
-            const newPrice = Math.max(evt.basePrice * 0.8, Math.round(evt.price * multiplier * 100) / 100);
-            if (newPrice !== evt.price) {
-              return { ...evt, price: newPrice };
-            }
-          }
-          return evt;
-        })
-      );
-    }, 45000); // Check every 45 seconds
-
-    return () => clearInterval(interval);
+    let cancelled = false;
+    setEventsLoading(true);
+    fetchEvents()
+      .then((data) => {
+        if (!cancelled) {
+          setEvents(data);
+          setEventsError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setEventsError(err instanceof ApiError ? err.message : 'Could not reach the backend.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setEventsLoading(false);
+      });
+    return () => { cancelled = true; };
   }, []);
+
+  // DISABLED: this used to randomly perturb prices client-side every 45s to
+  // make the old mock-only prototype feel "alive". Now that events come
+  // from the real backend/DB, this would silently overwrite real prices
+  // with fake random ones on every tick -- fighting the actual Dynamic
+  // Pricing Agent instead of reflecting it. Real price changes should come
+  // from the backend (re-fetching events, or a future live-update channel),
+  // not a client-side random walk. Left commented rather than deleted so
+  // the original simulation logic isn't lost if it's useful reference.
+  //
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setEvents((prevEvents) =>
+  //       prevEvents.map((evt) => {
+  //         if (evt.demand === 'Surge') {
+  //           const multiplier = 1 + (Math.random() * 0.05);
+  //           const newPrice = Math.round(evt.price * multiplier * 100) / 100;
+  //           if (newPrice !== evt.price) {
+  //             triggerSystemNotification(`Dynamic Pricing: "${evt.title}" price increased to $${newPrice} due to high demand.`, 'pricing');
+  //             return { ...evt, price: newPrice };
+  //           }
+  //         } else if (evt.demand === 'Low') {
+  //           const multiplier = 1 - (Math.random() * 0.03);
+  //           const newPrice = Math.max(evt.basePrice * 0.8, Math.round(evt.price * multiplier * 100) / 100);
+  //           if (newPrice !== evt.price) {
+  //             return { ...evt, price: newPrice };
+  //           }
+  //         }
+  //         return evt;
+  //       })
+  //     );
+  //   }, 45000);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   const triggerSystemNotification = (message, type = 'info') => {
     const newNotif = {
@@ -471,6 +391,8 @@ export const AppContextProvider = ({ children }) => {
     <AppContext.Provider
       value={{
         events,
+        eventsLoading,
+        eventsError,
         bookings,
         userProfile,
         fraudLogs,

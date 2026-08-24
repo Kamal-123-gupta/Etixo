@@ -2,6 +2,8 @@
 
 > A 9-agent, AI-native reimagining of event discovery and ticket booking — where autonomous agents personalize discovery, automate organizer workflows, optimize pricing and marketing, and protect the platform from fraud, instead of relying on static, rule-based ticketing systems.
 
+> **Implementation status:** All 9 agents described below are implemented as real backend code in `backend/app/agents/` (53 passing tests) — this README's architecture is no longer just a plan. The one piece still outstanding is frontend integration: `src/` (this repo's React app) still simulates all 9 agents client-side in `AppContext.jsx` rather than calling the real API. See `backend/README.md` for the full agent-by-agent status table and setup instructions.
+
 
 ---
 
@@ -264,19 +266,19 @@ The Recommendation Engine powers Agents #1 and #2 and is designed as its own pip
 | **Styling** | Tailwind CSS 4 | Already implemented; utility-first styling matching the dark, agent-console aesthetic |
 | **Charts** | Recharts | Already implemented; Organizer Intelligence Agent's sales/revenue visualizations |
 | **Icons** | lucide-react | Already implemented across all portals |
-| **Backend framework** | Python + FastAPI *(proposed)* | Async-friendly, typed request/response models, pairs naturally with a Python AI/ML stack |
-| **Auth** | JWT | Named directly in the 6-week plan (Day 4: "defined auth approach (JWT)") |
-| **Database** | PostgreSQL *(proposed)* | Relational integrity for users/events/bookings/preferences as scoped in the plan's DB schema task |
-| **ORM / migrations** | SQLAlchemy + Alembic *(proposed)* | Standard, typed data-access layer for a FastAPI backend |
-| **AI / ML framework** | `pandas`, `scikit-learn` | Explicitly named in the 6-week plan for the recommendation stack |
-| **LLM layer** | Pluggable LLM API (provider-agnostic) | Plan specifies "LLM API for NLP agents" without naming a fixed provider — kept configurable |
-| **Embeddings (future)** | `sentence-transformers` *(optional, proposed)* | Enables semantic search/hybrid recommendations beyond content-based filtering |
-| **Vector DB (future)** | Chroma or `pgvector` *(optional, proposed)* | Only needed once embedding-based recommendations/search are introduced |
-| **Containerization** | Docker + Docker Compose *(proposed)* | Reproducible local/staging environments across frontend, backend, and database |
-| **Deployment** | Cloud host TBD (Render / Railway / similar) *(proposed)* | Plan reaches a "staging deployment" milestone in Week 6 without naming a specific host |
-| **Testing** | `pytest` (backend), Vitest/RTL (frontend) *(proposed)* | Standard testing stacks for the respective ecosystems |
-| **CI/CD** | GitHub Actions *(proposed)* | Automates lint/test/build on push, consistent with the plan's Week 6 integration/deploy phase |
-| **Logging & monitoring** | Structured logging via `agent_logs` table + platform logs *(proposed)* | Every agent action is auditable, matching the plan's DB schema note ("agent logs") |
+| **Backend framework** | Python + FastAPI *(implemented — see `backend/`)* | Async-friendly, typed request/response models, pairs naturally with a Python AI/ML stack |
+| **Auth** | JWT *(implemented)* | Named directly in the 6-week plan (Day 4: "defined auth approach (JWT)") |
+| **Database** | SQLite (dev) / PostgreSQL-Neon (prod) *(implemented via SQLAlchemy)* | Relational integrity for users/events/bookings/preferences as scoped in the plan's DB schema task; `DATABASE_URL` swaps environments with no code changes |
+| **ORM / migrations** | SQLAlchemy + Alembic *(implemented)* | Standard, typed data-access layer for a FastAPI backend |
+| **AI / ML framework** | `pandas`, `scikit-learn`-style content-based scoring | Explicitly named in the 6-week plan for the recommendation stack |
+| **LLM layer** | Pluggable LLM API *(implemented — Anthropic provider + template fallback, see `backend/app/llm/`)* | Plan specifies "LLM API for NLP agents" without naming a fixed provider — kept configurable via `LLM_PROVIDER`/`LLM_API_KEY`/`LLM_MODEL` |
+| **Embeddings (future)** | `sentence-transformers` *(optional, still proposed)* | Enables semantic search/hybrid recommendations beyond content-based filtering |
+| **Vector DB (future)** | Chroma or `pgvector` *(optional, still proposed)* | Only needed once embedding-based recommendations/search are introduced |
+| **Containerization** | Docker *(backend `Dockerfile` implemented; Compose still proposed)* | Reproducible local/staging environments across frontend, backend, and database |
+| **Deployment** | Cloud host TBD (Render / Railway / similar) *(still proposed)* | Plan reaches a "staging deployment" milestone in Week 6 without naming a specific host |
+| **Testing** | `pytest` (backend, *implemented — 53 tests*), Vitest/RTL (frontend, *still proposed*) | Standard testing stacks for the respective ecosystems |
+| **CI/CD** | GitHub Actions *(still proposed)* | Automates lint/test/build on push, consistent with the plan's Week 6 integration/deploy phase |
+| **Logging & monitoring** | Structured logging via `agent_logs` table *(implemented)* + platform logs *(still proposed)* | Every agent action is auditable, matching the plan's DB schema note ("agent logs") |
 | **Documentation** | Markdown (this README + inline docstrings) | GitHub-native, low friction for recruiters/developers |
 
 ---
@@ -397,8 +399,8 @@ The Recommendation Engine powers Agents #1 and #2 and is designed as its own pip
 
 ### Prerequisites
 - **Node.js** ≥ 18 and npm (for the frontend)
-- **Python** ≥ 3.11 (for the proposed backend)
-- **PostgreSQL** ≥ 14 (proposed database)
+- **Python** ≥ 3.11 (for the backend)
+- **PostgreSQL** ≥ 14 for production (local dev defaults to SQLite — no separate DB install needed)
 - **Docker** (optional, for containerized local setup)
 
 ### 1. Clone the repository
@@ -412,23 +414,22 @@ cd <repository-folder>
 npm install
 ```
 
-### 3. Backend setup (proposed)
+### 3. Backend setup (already implemented)
 ```bash
 cd backend
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+cp .env.example .env        # defaults work as-is for local dev (SQLite)
 ```
 
-### 4. Database setup (proposed)
+### 4. Database setup (already implemented)
 ```bash
-# Create the database
-createdb ticket_booking_db
-
-# Run migrations
 cd backend
-alembic upgrade head
+alembic upgrade head                  # create tables (SQLite by default)
+python scripts/seed_data.py --reset   # optional: load the real 1,017-event dataset
 ```
+To use Postgres/Neon instead of local SQLite, set `DATABASE_URL` in `backend/.env` before running `alembic upgrade head` — see `backend/README.md`.
 
 ---
 
@@ -440,13 +441,14 @@ npm run dev
 ```
 Runs on Vite's default dev server (typically `http://localhost:5173`). Build for production with `npm run build`, preview with `npm run preview`, and lint with `npm run lint` (oxlint).
 
-### Backend (proposed)
+### Backend (already implemented)
 ```bash
 cd backend
 uvicorn app.main:app --reload
 ```
+API docs at `http://localhost:8000/docs`.
 
-### Full stack via Docker Compose (proposed)
+### Full stack via Docker Compose (backend `Dockerfile` implemented; Compose file still proposed)
 ```bash
 docker compose up --build
 ```
@@ -468,13 +470,13 @@ LLM_PROVIDER=openai   # or anthropic / other — kept pluggable per the plan
 ```
 ## Future Improvements
 
-- Replace keyword/regex-based intent parsing (Discovery Agent, Support Agent) with true LLM-backed NLU
+- Replace Discovery Agent's keyword/regex-based intent parsing with true LLM-backed NLU *(Support Agent already gained an LLM fallback for open-ended queries — see `backend/README.md`; Discovery Agent's rule-based parser is unchanged)*
 - Upgrade the content-based recommendation baseline to a hybrid (collaborative + embedding-based) model
-- Move Dynamic Pricing Agent's simulated `setInterval` tick to a real server-side scheduled job
+- ~~Move Dynamic Pricing Agent's simulated `setInterval` tick to a real server-side scheduled job~~ *(done — pricing now re-evaluates automatically after every booking, plus an on-demand `POST /agents/pricing/reevaluate` admin sweep; wiring that sweep to an actual cron/scheduler, rather than calling it on demand, is the remaining piece)*
 - Add a trained anomaly-detection model to the Fraud Detection Agent, alongside its existing rule-based checks
 - Real payment gateway integration (the frontend already scaffolds a Razorpay-style checkout flow)
-- Role-based access control enforcement end-to-end (organizer-scoped data, admin-only routes)
-- Automated E2E tests across all three portals
+- ~~Role-based access control enforcement end-to-end (organizer-scoped data, admin-only routes)~~ *(done in the backend — JWT role gating + per-resource ownership checks on all organizer/admin endpoints; the frontend doesn't yet call any of this, see the status banner at the top of this file)*
+- Automated E2E tests across all three portals *(the backend now has 53 pytest cases; frontend E2E is still open)*
 
 ---
 

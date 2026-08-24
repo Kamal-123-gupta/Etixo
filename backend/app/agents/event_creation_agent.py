@@ -1,101 +1,92 @@
+"""
+event_creation_agent.py — Event Creation Assistant Agent.
 
+Generates a description, FAQ list, and short T&Cs list from an event's
+title/category/location/price. Tries the pluggable LLM client first (see
+app/llm/client.py); falls back to a deterministic template generator with
+no external configuration required, so this agent always returns usable
+content -- matching the "LLM generation" approach named in the README,
+with a working offline fallback since local dev/tests won't have an LLM
+key configured.
+"""
 
+import json
 from dataclasses import dataclass, field
 
-from app.llm.client import LLMClient, get_llm_client
+from app.llm.client import LLMUnavailable, generate
 from app.llm.validation import category_mentioned_correctly
 
-SYSTEM_PROMPT = """You are an event marketing copywriter for a ticket booking platform.
-Given structured details about an event, generate:
-- description: a compelling 2-3 sentence event description
-- faqs: a list of 3-5 {question, answer} objects covering common attendee questions
-  (doors/entry time, refund policy, parking/accessibility, age restrictions)
-- terms: a list of 4-6 short terms & conditions strings
-- seo_keywords: a list of 5-8 relevant search keywords
-- meta_description: a single SEO meta description under 160 characters
-
-Return ONLY a JSON object with exactly these five keys."""
+SYSTEM_PROMPT = (
+    "You are an event copywriter for a ticket booking platform. Given an "
+    "event's title, category, location, and price, produce marketing copy. "
+    "Respond with ONLY minified JSON, no markdown fences, no preamble, "
+    'matching exactly this shape: {"description": string, '
+    '"faqs": [{"question": string, "answer": string}], "terms": [string]}. '
+    "Provide one paragraph for description, 4-6 FAQs, and 4-6 short terms."
+)
 
 
 @dataclass
-class EventCreationAssistantAgent:
-    llm_client: LLMClient = None  # type: ignore[assignment]
-    known_categories: list[str] = field(default_factory=list)
-
-    def __post_init__(self):
-        if self.llm_client is None:
-            self.llm_client = get_llm_client()
-
-    @staticmethod
-    def _build_prompt(title: str, category: str, location: str,
-                       price: float | None, performer: str | None) -> str:
-        import json
-        return json.dumps({
-            "title": title, "category": category, "location": location,
-            "price": price, "performer": performer,
-        })
-
-    def generate_event_content(
-        self,
-        title: str,
-        category: str,
-        location: str,
-        price: float | None = None,
-        performer: str | None = None,
-    ) -> dict:
-        """Returns {description, faqs, terms, seo_keywords, meta_description}.
-        Organizer reviews/edits before publishing -- this is a draft, not
-        final copy."""
-        user_prompt = self._build_prompt(title, category, location, price, performer)
-        result = self.llm_client.generate_json(SYSTEM_PROMPT, user_prompt)
-        self._validate(result)
-        warnings = []
-        if self.known_categories:
-            for field_name in ("description", "meta_description"):
-                ok, msg = category_mentioned_correctly(
-                    result[field_name], category, self.known_categories
-                )
-                if not ok:
-                    warnings.append(f"[{field_name}] {msg}")
-        if warnings:
-            result["_warnings"] = warnings
-        return result
-
-    @staticmethod
-    def _validate(result: dict) -> None:
-        required = {"description", "faqs", "terms", "seo_keywords", "meta_description"}
-        missing = required - result.keys()
-        if missing:
-            raise ValueError(f"LLM output missing required fields: {missing}")
-        if not isinstance(result["faqs"], list) or not all(
-            isinstance(f, dict) and "question" in f and "answer" in f for f in result["faqs"]
-        ):
-            raise ValueError("faqs must be a list of {question, answer} objects")
-        if not isinstance(result["terms"], list):
-            raise ValueError("terms must be a list of strings")
+class GeneratedEventContent:
+    description: str
+    faqs: list[dict] = field(default_factory=list)
+    terms: list[str] = field(default_factory=list)
+    source: str = "template"  # "llm" or "template"
+    warnings: list[str] = field(default_factory=list)
 
 
-if __name__ == "__main__":
-    agent = EventCreationAssistantAgent()
-    print(f"Using LLM client: {type(agent.llm_client).__name__}\n")
-
-    test_events = [
-        {"title": "Dallas Cowboys vs Philadelphia Eagles", "category": "football",
-         "location": "Arlington, TX", "price": 162.0, "performer": "Dallas Cowboys"},
-        {"title": "Salt Lake City Winter Classic", "category": "hockey",
-         "location": "Salt Lake City, UT", "price": 136.0, "performer": "Utah Mammoth"},
+def _template_fallback(
+    title: str, category: str, venue_city: str | None, venue_state: str | None, price: float
+) -> GeneratedEventContent:
+    location = f"{venue_city}, {venue_state}" if venue_city and venue_state else (venue_city or "the venue")
+    description = (
+        f"Join us for {title}, a {category} event taking place at {location}. "
+        f"Tickets start at ${price:.2f} -- secure yours before they sell out."
+    )
+    faqs = [
+        {"question": "What time do doors open?", "answer": "Doors typically open one hour before the scheduled start time."},
+        {"question": "Is parking available nearby?", "answer": f"Parking availability varies -- check with {location} directly for the latest details."},
+        {"question": "Are tickets refundable?", "answer": "Refunds are available up to 48 hours before the event, subject to the organizer's cancellation policy."},
+        {"question": "How do I get my ticket?", "answer": "A QR code ticket is generated automatically after checkout and is available on your bookings page."},
+        {"question": "Is this event suitable for all ages?", "answer": "Please check the venue's posted guidelines for any age restrictions on this event."},
     ]
+    terms = [
+        "Tickets are non-transferable unless otherwise stated by the organizer.",
+        "Entry requires a valid QR code ticket, digital or printed.",
+        "The organizer reserves the right to refuse entry for policy violations.",
+        f"This {category} event is subject to the venue's standard terms of service.",
+        "Prices may increase as demand rises; the price shown at checkout is final.",
+    ]
+    return GeneratedEventContent(description=description, faqs=faqs, terms=terms, source="template")
 
-    for ev in test_events:
-        print(f"=== {ev['title']} ===")
-        content = agent.generate_event_content(**ev)
-        print("Description:", content["description"])
-        print("FAQs:")
-        for f in content["faqs"]:
-            print(f"  Q: {f['question']}\n  A: {f['answer']}")
-        print("Terms:")
-        for t in content["terms"]:
-            print(f"  - {t}")
-        print("SEO keywords:", content["seo_keywords"])
-        print("Meta description:", content["meta_description"])
-        print()
+
+def generate_event_content(
+    title: str, category: str, venue_city: str | None, venue_state: str | None, price: float,
+    known_categories: list[str] | None = None,
+) -> GeneratedEventContent:
+    location = f"{venue_city}, {venue_state}" if venue_city and venue_state else "TBD"
+    prompt = f"Title: {title}\nCategory: {category}\nLocation: {location}\nPrice: ${price:.2f}"
+
+    try:
+        raw = generate(SYSTEM_PROMPT, prompt, max_tokens=1200)
+        payload = json.loads(raw)
+        result = GeneratedEventContent(
+            description=str(payload["description"]),
+            faqs=list(payload.get("faqs", [])),
+            terms=list(payload.get("terms", [])),
+            source="llm",
+        )
+    except (LLMUnavailable, json.JSONDecodeError, KeyError, TypeError):
+        result = _template_fallback(title, category, venue_city, venue_state, price)
+
+    # Consistency check: catches an LLM naming a DIFFERENT known category
+    # than the one it was given (e.g. "basketball" for a hockey event) --
+    # a real hallucination caught in testing with a local Ollama model.
+    # Skipped (not an error) if the caller doesn't supply the category
+    # vocabulary -- optional so this stays backward compatible.
+    if known_categories:
+        ok, msg = category_mentioned_correctly(result.description, category, known_categories)
+        if not ok:
+            result.warnings.append(msg)
+
+    return result

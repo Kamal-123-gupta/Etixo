@@ -1,15 +1,22 @@
-import React, { useContext, useState, useMemo } from 'react';
+import React, { useContext, useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
+import { searchEvents, fetchEventById } from '../lib/api';
 import { Search, Sparkles, SlidersHorizontal, MapPin, Calendar, ArrowRight } from 'lucide-react';
 
 export default function AttendeePortal() {
-  const { events, userProfile, setUserProfile } = useContext(AppContext);
+  const { events, eventsLoading, eventsError, userProfile, setUserProfile } = useContext(AppContext);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
-  // Categories available
-  const availableCategories = ['Tech', 'Music', 'Comedy', 'Arts'];
+  // Categories derived from the real event catalog instead of a hardcoded
+  // guess -- the old ['Tech', 'Music', 'Comedy', 'Arts'] list doesn't exist
+  // anywhere in the real data (real categories are football/basketball/
+  // baseball/hockey/stadium_tours), so the preference-toggle buttons were
+  // silently offering categories with zero matching events.
+  const availableCategories = useMemo(() => {
+    return [...new Set(events.map((evt) => evt.category))].filter(Boolean).sort();
+  }, [events]);
 
   // Handle preference tag toggle
   const handleTogglePref = (category) => {
@@ -21,61 +28,89 @@ export default function AttendeePortal() {
     });
   };
 
-  // Mock Natural Language Query Parser (Event Discovery Agent)
-  const parsedIntent = useMemo(() => {
-    const q = searchQuery.toLowerCase();
-    const intent = {
-      category: null,
-      maxPrice: null,
-      location: null,
-    };
+  // Real Event Discovery Agent search (debounced -- avoids firing a
+  // request on every keystroke). Empty query short-circuits to showing
+  // every event, no API call needed.
+  const [parsedIntent, setParsedIntent] = useState(null);
+  const [searchResultIds, setSearchResultIds] = useState(null); // null = no search active
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState(null);
 
-    if (!q) return null;
+  // Cache for events referenced by search results but not present in the
+  // (paginated) `events` list from context -- GET /events defaults to a
+  // 20-item page, but the Discovery Agent searches the FULL DB with no
+  // limit, so a legitimate search result can reference an event outside
+  // whatever page happened to be loaded. Without this, those results were
+  // silently dropped (confirmed in testing: a 3-result search rendered
+  // only 1 card, no error, no indication 2 results vanished).
+  const [fetchedSearchEvents, setFetchedSearchEvents] = useState({});
 
-    // Check categories
-    if (q.includes('tech') || q.includes('hackathon') || q.includes('summit')) intent.category = 'Tech';
-    else if (q.includes('music') || q.includes('concert') || q.includes('electronic') || q.includes('neon')) intent.category = 'Music';
-    else if (q.includes('comedy') || q.includes('show') || q.includes('laugh') || q.includes('improv')) intent.category = 'Comedy';
-    else if (q.includes('art') || q.includes('chiaroscuro') || q.includes('exhibition')) intent.category = 'Arts';
-
-    // Check location
-    if (q.includes('bengaluru') || q.includes('bangalore')) intent.location = 'Bengaluru';
-    else if (q.includes('mumbai') || q.includes('bombay')) intent.location = 'Mumbai';
-    else if (q.includes('delhi')) intent.location = 'Delhi';
-    else if (q.includes('pune')) intent.location = 'Pune';
-
-    // Parse price limits (e.g. "under $50" or "under 100")
-    const priceRegex = /(?:under|below|\$)\s*(\d+)/i;
-    const match = q.match(priceRegex);
-    if (match && match[1]) {
-      intent.maxPrice = Number(match[1]);
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (!query) {
+      setParsedIntent(null);
+      setSearchResultIds(null);
+      setSearchError(null);
+      return;
     }
 
-    return intent;
-  }, [searchQuery]);
+    let cancelled = false;
+    setSearchLoading(true);
+    const timer = setTimeout(() => {
+      searchEvents(query, { userId: userProfile.id ?? undefined })
+        .then(async ({ parsedIntent, rankedEventIds }) => {
+          if (cancelled) return;
+          setParsedIntent(parsedIntent);
+          setSearchResultIds(rankedEventIds);
+          setSearchError(null);
 
-  // Filter events based on search query & natural language intent
+          // fetch any result IDs not already available locally, in parallel
+          const knownIds = new Set(events.map((e) => e.id));
+          const missingIds = rankedEventIds.filter(
+            (id) => !knownIds.has(id) && !(id in fetchedSearchEvents)
+          );
+          if (missingIds.length > 0) {
+            const fetched = await Promise.all(
+              missingIds.map((id) => fetchEventById(id).catch(() => null))
+            );
+            if (cancelled) return;
+            setFetchedSearchEvents((prev) => {
+              const next = { ...prev };
+              missingIds.forEach((id, i) => {
+                if (fetched[i]) next[id] = fetched[i];
+              });
+              return next;
+            });
+          }
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          setSearchError(err.message || 'Search failed.');
+          setSearchResultIds([]);
+        })
+        .finally(() => {
+          if (!cancelled) setSearchLoading(false);
+        });
+    }, 350); // debounce
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchedSearchEvents intentionally excluded to avoid re-searching on cache updates
+  }, [searchQuery, userProfile.id, events]);
+
+  // Map the agent's ranked event IDs back onto full event objects --
+  // checking the locally-loaded list first, then the fetched-on-demand
+  // cache for anything outside the loaded page. Order is preserved (the
+  // agent's ranking), not re-sorted.
   const filteredEvents = useMemo(() => {
-    return events.filter((evt) => {
-      // Natural language search filtering
-      if (searchQuery.trim() === '') return true;
-
-      const titleMatch = evt.title.toLowerCase().includes(searchQuery.toLowerCase());
-      const descMatch = evt.description.toLowerCase().includes(searchQuery.toLowerCase());
-
-      // If we parsed structured intent, use it to assist/supplement filters
-      if (parsedIntent) {
-        let isMatch = true;
-        if (parsedIntent.category && evt.category !== parsedIntent.category) isMatch = false;
-        if (parsedIntent.location && !evt.location.toLowerCase().includes(parsedIntent.location.toLowerCase())) isMatch = false;
-        if (parsedIntent.maxPrice && evt.price > parsedIntent.maxPrice) isMatch = false;
-        
-        if (isMatch) return true;
-      }
-
-      return titleMatch || descMatch;
-    });
-  }, [events, searchQuery, parsedIntent]);
+    if (searchResultIds === null) return events; // no active search
+    const eventsById = new Map(events.map((evt) => [evt.id, evt]));
+    return searchResultIds
+      .map((id) => eventsById.get(id) || fetchedSearchEvents[id])
+      .filter(Boolean);
+  }, [events, searchResultIds, fetchedSearchEvents]);
 
   // Recommended events based on User Preference & Personalization Agent
   const recommendedEvents = useMemo(() => {
@@ -236,7 +271,24 @@ export default function AttendeePortal() {
           <span className="text-xs text-gray-400 font-mono">{filteredEvents.length} Events matches</span>
         </div>
 
-        {filteredEvents.length === 0 ? (
+        {eventsLoading ? (
+          <div className="text-center p-12 bg-[#1f2028] border border-white/5 rounded-2xl">
+            <p className="text-gray-400 text-sm">Loading events from the backend...</p>
+          </div>
+        ) : eventsError ? (
+          <div className="text-center p-12 bg-[#1f2028] border border-rose-500/20 rounded-2xl">
+            <p className="text-rose-400 text-sm font-semibold mb-1">Couldn't reach the backend</p>
+            <p className="text-gray-500 text-xs font-mono">{eventsError}</p>
+            <p className="text-gray-500 text-xs mt-2">
+              Check that the API server is running and reachable at the configured base URL.
+            </p>
+          </div>
+        ) : events.length === 0 ? (
+          <div className="text-center p-12 bg-[#1f2028] border border-white/5 rounded-2xl">
+            <p className="text-gray-400 text-sm">The database has no events yet.</p>
+            <p className="text-gray-500 text-xs mt-2">Run the seed script on the backend to load sample data.</p>
+          </div>
+        ) : filteredEvents.length === 0 ? (
           <div className="text-center p-12 bg-[#1f2028] border border-white/5 rounded-2xl">
             <p className="text-gray-400 text-sm">No scheduled events match your search query.</p>
             <button

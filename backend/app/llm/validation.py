@@ -10,9 +10,7 @@ checks catch that class of problem. They are deliberately lightweight
 (substring/keyword checks, not another LLM call) so they're cheap enough to
 run on every generation.
 
-Used by both event_creation_agent.py and marketing_agent.py -- any future
-agent that generates event-related copy should use this too rather than
-re-implementing its own check.
+Used by both event_creation_agent.py and marketing_agent.py.
 """
 
 
