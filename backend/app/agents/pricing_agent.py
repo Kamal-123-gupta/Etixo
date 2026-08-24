@@ -82,3 +82,13 @@ def get_locked_price(event_id: int, user_id: int) -> float | None:
         del _price_locks[(event_id, user_id)]
         return None
     return price
+
+
+def clear_price_lock(event_id: int, user_id: int) -> None:
+    """Invalidates a lock after it's been used for a booking. Without this,
+    a lock is reusable for unlimited separate bookings until it naturally
+    expires (up to 10 minutes) -- confirmed via testing: a user could lock
+    a price, buy tickets, have the price legitimately rise from their own
+    purchase, then buy MORE tickets at the same stale locked price. A lock
+    should cover one checkout, not a standing discount for the whole window."""
+    _price_locks.pop((event_id, user_id), None)

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.agents.fraud_agent import screen_booking
-from app.agents.pricing_agent import evaluate_price, get_locked_price, lock_price
+from app.agents.pricing_agent import clear_price_lock, evaluate_price, get_locked_price, lock_price
 from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.booking import Booking
@@ -67,6 +67,10 @@ def create_booking(
     locked = get_locked_price(event.id, current_user.id)
     unit_price = locked if locked is not None else event.current_price
     price_paid = unit_price * payload.quantity
+    if locked is not None:
+        # consume the lock -- it covers ONE checkout, not a standing
+        # discount for the rest of its window (see clear_price_lock docstring)
+        clear_price_lock(event.id, current_user.id)
 
     booking = Booking(
         event_id=event.id,
