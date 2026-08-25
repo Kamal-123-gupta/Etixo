@@ -252,3 +252,22 @@ export async function generateAndApplyEventContent(eventId) {
 export async function fetchOrganizerInsights() {
   return apiFetch("/organizer/insights");
 }
+
+/**
+ * Dynamic Pricing Agent: locks the event's CURRENT price for this user for
+ * a short window (10 min server-side -- see PRICE_LOCK_SECONDS in
+ * pricing_agent.py). Requires a logged-in user; there's no anonymous
+ * locking path on the backend. The lock is honored automatically by
+ * POST /bookings for whichever authenticated user holds it -- nothing
+ * needs to be threaded through the booking payload itself.
+ */
+export async function lockPriceApi(eventId) {
+  return apiFetch(`/events/${eventId}/price-lock`, { method: "POST" });
+}
+
+
+export async function fetchRecommendations(userId, { topN = 10 } = {}) {
+  const params = new URLSearchParams({ userId: String(userId), top_n: String(topN) });
+  const data = await apiFetch(`/agents/recommendations?${params.toString()}`);
+  return data.results.map((r) => String(r.event_id));
+}

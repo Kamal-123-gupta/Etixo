@@ -1,11 +1,12 @@
 import React, { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { User, Mail, Lock, Globe, MapPin, UserPlus, AlertCircle } from 'lucide-react';
 
 export default function Signup() {
   const { signup, login } = useContext(AppContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -39,9 +40,10 @@ export default function Signup() {
         home_country: homeCountry || null,
       });
 
-      // Auto login after signup
+      // Auto login after signup, then send them back to the event they
+      // were trying to book (if any), otherwise home.
       await login(email, password);
-      navigate('/');
+      navigate(location.state?.from || '/');
     } catch (err) {
       console.error(err);
       setError(err.message || 'Registration failed. The email might already be in use.');
@@ -196,7 +198,7 @@ export default function Signup() {
         <div className="text-center pt-2">
           <p className="text-xs text-gray-500">
             Already have an account?{' '}
-            <Link to="/login" className="text-purple-400 hover:text-purple-300 font-semibold transition-colors">
+            <Link to="/login" state={location.state} className="text-purple-400 hover:text-purple-300 font-semibold transition-colors">
               Sign In
             </Link>
           </p>

@@ -1,11 +1,11 @@
 import React, { useContext, useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { searchEvents, fetchEventById } from '../lib/api';
+import { searchEvents, fetchEventById, fetchRecommendations } from '../lib/api';
 import { Search, Sparkles, SlidersHorizontal, MapPin, Calendar, ArrowRight } from 'lucide-react';
 
 export default function AttendeePortal() {
-  const { events, eventsLoading, eventsError, userProfile, setUserProfile } = useContext(AppContext);
+  const { events, eventsLoading, eventsError, userProfile, updateProfilePreferences } = useContext(AppContext);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
@@ -18,14 +18,23 @@ export default function AttendeePortal() {
     return [...new Set(events.map((evt) => evt.category))].filter(Boolean).sort();
   }, [events]);
 
-  // Handle preference tag toggle
+  // Handle preference tag toggle. Routes through the context's real
+  // updateProfilePreferences() (PUT /users/me/preferences for logged-in
+  // users) instead of setting local state directly -- it USED to just
+  // mutate userProfile in place, which never reached the backend. That
+  // was silently harmless while "Recommended for You" was only a local
+  // category filter, but now that it calls the real Personalization
+  // Agent (which ranks off the DB-stored preferences, not local React
+  // state), a toggle that never persists would look like it does nothing.
   const handleTogglePref = (category) => {
-    setUserProfile((prev) => {
-      const prefs = prev.preferences.includes(category)
-        ? prev.preferences.filter((p) => p !== category)
-        : [...prev.preferences, category];
-      return { ...prev, preferences: prefs };
-    });
+    const prefs = userProfile.preferences.includes(category)
+      ? userProfile.preferences.filter((p) => p !== category)
+      : [...userProfile.preferences, category];
+    updateProfilePreferences({
+      categories: prefs,
+      budget_max: userProfile.budget,
+      ticket_tier: userProfile.ticketTier
+    }).catch((err) => console.error('Failed to save preference', err));
   };
 
   // Real Event Discovery Agent search (debounced -- avoids firing a
@@ -36,13 +45,14 @@ export default function AttendeePortal() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState(null);
 
-  // Cache for events referenced by search results but not present in the
-  // (paginated) `events` list from context -- GET /events defaults to a
-  // 20-item page, but the Discovery Agent searches the FULL DB with no
-  // limit, so a legitimate search result can reference an event outside
-  // whatever page happened to be loaded. Without this, those results were
-  // silently dropped (confirmed in testing: a 3-result search rendered
-  // only 1 card, no error, no indication 2 results vanished).
+  // Cache for events referenced by search OR recommendation results but not
+  // present in the (paginated) `events` list from context -- GET /events
+  // defaults to a 20-item page, but the Discovery/Personalization Agents
+  // search/rank the FULL DB with no limit, so a legitimate result can
+  // reference an event outside whatever page happened to be loaded.
+  // Without this, those results were silently dropped (confirmed in
+  // testing: a 3-result search rendered only 1 card, no error, no
+  // indication 2 results vanished).
   const [fetchedSearchEvents, setFetchedSearchEvents] = useState({});
 
   useEffect(() => {
@@ -112,12 +122,73 @@ export default function AttendeePortal() {
       .filter(Boolean);
   }, [events, searchResultIds, fetchedSearchEvents]);
 
-  // Recommended events based on User Preference & Personalization Agent
+  // Real User Preference & Personalization Agent recommendations
+  // (GET /agents/recommendations). Requires a real logged-in user id --
+  // there's no anonymous recommendation path server-side, so guests get
+  // null here and see a sign-in prompt instead of a fake list.
+  const [recommendedEventIds, setRecommendedEventIds] = useState(null);
+  const [recLoading, setRecLoading] = useState(false);
+  const [recError, setRecError] = useState(null);
+
+  useEffect(() => {
+    if (userProfile.isGuest || !userProfile.id) {
+      setRecommendedEventIds(null);
+      setRecError(null);
+      return;
+    }
+
+    let cancelled = false;
+    setRecLoading(true);
+    fetchRecommendations(userProfile.id)
+      .then(async (rankedEventIds) => {
+        if (cancelled) return;
+        setRecommendedEventIds(rankedEventIds);
+        setRecError(null);
+
+        // fetch any result IDs not already available locally, in parallel
+        // (same pagination gap as Discovery Agent search -- see comment above)
+        const knownIds = new Set(events.map((e) => e.id));
+        const missingIds = rankedEventIds.filter(
+          (id) => !knownIds.has(id) && !(id in fetchedSearchEvents)
+        );
+        if (missingIds.length > 0) {
+          const fetched = await Promise.all(
+            missingIds.map((id) => fetchEventById(id).catch(() => null))
+          );
+          if (cancelled) return;
+          setFetchedSearchEvents((prev) => {
+            const next = { ...prev };
+            missingIds.forEach((id, i) => {
+              if (fetched[i]) next[id] = fetched[i];
+            });
+            return next;
+          });
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setRecError(err.message || 'Could not load recommendations.');
+        setRecommendedEventIds([]);
+      })
+      .finally(() => {
+        if (!cancelled) setRecLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchedSearchEvents intentionally excluded to avoid re-fetching on cache updates
+  }, [userProfile.id, userProfile.isGuest, userProfile.preferences, events]);
+
+  // Map the agent's ranked event IDs back onto full event objects, same
+  // pattern as filteredEvents above -- order preserved, not re-sorted.
   const recommendedEvents = useMemo(() => {
-    return events.filter((evt) =>
-      userProfile.preferences.some((pref) => pref.toLowerCase() === evt.category.toLowerCase())
-    );
-  }, [events, userProfile.preferences]);
+    if (!recommendedEventIds) return [];
+    const eventsById = new Map(events.map((evt) => [evt.id, evt]));
+    return recommendedEventIds
+      .map((id) => eventsById.get(id) || fetchedSearchEvents[id])
+      .filter(Boolean);
+  }, [events, recommendedEventIds, fetchedSearchEvents]);
 
   return (
     <div className="flex-1 bg-[#16171d] text-gray-100 p-6 md:p-10 space-y-10 max-w-7xl mx-auto w-full">
@@ -210,6 +281,34 @@ export default function AttendeePortal() {
       </section>
 
       {/* Recommended for You Grid (Horizontal Scroll / Block) */}
+      {!searchQuery && userProfile.isGuest && (
+        <section className="rounded-2xl border border-white/5 bg-[#1f2028]/60 p-5 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
+            Sign in to see events picked for you by the Personalization Agent.
+          </div>
+          <button
+            onClick={() => navigate('/login')}
+            className="text-xs bg-purple-600 hover:bg-purple-700 text-white font-medium px-4 py-2 rounded-xl transition-all shrink-0"
+          >
+            Sign In
+          </button>
+        </section>
+      )}
+
+      {!searchQuery && !userProfile.isGuest && recLoading && !recommendedEventIds && (
+        <section className="text-center p-6 bg-[#1f2028] border border-white/5 rounded-2xl">
+          <p className="text-gray-400 text-sm">Personalization Agent is picking events for you...</p>
+        </section>
+      )}
+
+      {!searchQuery && !userProfile.isGuest && recError && (
+        <section className="text-center p-6 bg-[#1f2028] border border-rose-500/20 rounded-2xl">
+          <p className="text-rose-400 text-sm font-semibold mb-1">Couldn't load recommendations</p>
+          <p className="text-gray-500 text-xs font-mono">{recError}</p>
+        </section>
+      )}
+
       {recommendedEvents.length > 0 && !searchQuery && (
         <section className="space-y-4">
           <div className="flex items-center gap-2">

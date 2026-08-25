@@ -1,11 +1,12 @@
 import React, { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { Mail, Lock, LogIn, AlertCircle } from 'lucide-react';
 
 export default function Login() {
   const { login } = useContext(AppContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,8 +20,9 @@ export default function Login() {
 
     try {
       await login(email, password);
-      // Success: redirect to home or attendee deck
-      navigate('/');
+      // Send them back to the event they were trying to book (if any),
+      // otherwise fall back to the home/attendee deck.
+      navigate(location.state?.from || '/');
     } catch (err) {
       console.error(err);
       setError(err.message || 'Invalid email or password. Please try again.');
@@ -98,7 +100,7 @@ export default function Login() {
         <div className="text-center pt-2">
           <p className="text-xs text-gray-500">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-purple-400 hover:text-purple-300 font-semibold transition-colors">
+            <Link to="/signup" state={location.state} className="text-purple-400 hover:text-purple-300 font-semibold transition-colors">
               Create an account
             </Link>
           </p>

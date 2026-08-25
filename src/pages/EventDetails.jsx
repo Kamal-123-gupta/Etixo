@@ -2,11 +2,12 @@ import React, { useContext, useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { ArrowLeft, MapPin, Calendar, Clock, AlertTriangle, CheckCircle, Shield, X, CreditCard } from 'lucide-react';
+import { lockPriceApi } from '../lib/api';
 
 export default function EventDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { events, createBooking } = useContext(AppContext);
+  const { events, createBooking, userProfile } = useContext(AppContext);
 
   const event = events.find(e => e.id === id);
 
@@ -22,29 +23,73 @@ export default function EventDetails() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingResult, setBookingResult] = useState(null); // { success: boolean, reason?: string, booking?: object }
 
-  // Countdown timer for Locked Dynamic Pricing (simulates Dynamic Pricing Agent)
-  const [priceLockTime, setPriceLockTime] = useState(300); // 5 mins
-  const timerRef = useRef(null);
+  // Real Dynamic Pricing Agent lock (POST /events/{id}/price-lock). Only
+  // logged-in users can hold a lock -- the backend has no anonymous
+  // locking path. `priceLock` holds { price, expiresAt: Date } | null;
+  // `priceLockStatus` covers 'idle' | 'loading' | 'locked' | 'error' so the
+  // UI can distinguish "not logged in" from "request failed" instead of
+  // always showing a ticking clock regardless of whether a real lock
+  // exists (the old behavior -- a pure cosmetic setInterval that reset
+  // itself forever, whether or not anything was actually locked).
+  const [priceLock, setPriceLock] = useState(null);
+  const [priceLockStatus, setPriceLockStatus] = useState('idle');
+  const [remainingSecs, setRemainingSecs] = useState(0);
+  const tickRef = useRef(null);
 
+  const acquireLock = async (eventId) => {
+    setPriceLockStatus('loading');
+    try {
+      const data = await lockPriceApi(eventId);
+      setPriceLock({ price: data.locked_price, expiresAt: new Date(data.expires_at) });
+      setPriceLockStatus('locked');
+    } catch (err) {
+      console.error('Price lock failed', err);
+      setPriceLock(null);
+      setPriceLockStatus('error');
+    }
+  };
+
+  // Acquire a lock whenever a logged-in user lands on a (different) event.
   useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setPriceLockTime(prev => {
-        if (prev <= 1) {
-          // Reset timer and slightly adjust lock
-          return 300;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    if (!event || userProfile.isGuest) {
+      setPriceLock(null);
+      setPriceLockStatus('idle');
+      return;
+    }
+    acquireLock(event.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-lock on event/guest-status change, not on every acquireLock identity change
+  }, [event?.id, userProfile.isGuest]);
 
-    return () => clearInterval(timerRef.current);
-  }, []);
+  // Tick the countdown from the real expiry timestamp; re-lock automatically
+  // once it runs out so the widget keeps reflecting a live, honorable quote
+  // rather than freezing at 0:00.
+  useEffect(() => {
+    if (!priceLock) {
+      setRemainingSecs(0);
+      return;
+    }
+    const tick = () => {
+      const secs = Math.max(0, Math.round((priceLock.expiresAt.getTime() - Date.now()) / 1000));
+      setRemainingSecs(secs);
+      if (secs === 0 && event && !userProfile.isGuest) {
+        acquireLock(event.id);
+      }
+    };
+    tick();
+    tickRef.current = setInterval(tick, 1000);
+    return () => clearInterval(tickRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on the lock object identity, not acquireLock
+  }, [priceLock]);
 
   const formatTime = (secs) => {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
+
+  // The price actually honored at checkout: the locked quote when one is
+  // held, otherwise the event's live current price.
+  const effectivePrice = priceLock?.price ?? event?.price;
 
   if (!event) {
     return (
@@ -64,6 +109,17 @@ export default function EventDetails() {
 
   const handleCheckoutSubmit = (e) => {
     e.preventDefault();
+
+    // The backend requires a real JWT for POST /bookings -- there is no
+    // anonymous booking path server-side, so a guest submitting this form
+    // would previously fall through to the old local-only mock fraud
+    // simulator instead of actually booking anything. Send them to log in
+    // first, and bring them straight back to this event afterward.
+    if (userProfile.isGuest) {
+      navigate('/login', { state: { from: `/event/${event.id}` } });
+      return;
+    }
+
     setBookingResult(null);
     setShowRazorpay(true);
   };
@@ -72,16 +128,29 @@ export default function EventDetails() {
     setIsProcessing(true);
 
     // Simulate short gateway handshaking latency
-    setTimeout(() => {
-      const result = createBooking(event.id, quantity, {
-        cardName,
-        cardNumber,
-        expiry,
-        cvv
-      });
+    setTimeout(async () => {
+      try {
+        const result = await createBooking(event.id, quantity, {
+          cardName,
+          cardNumber,
+          expiry,
+          cvv
+        });
 
-      setIsProcessing(false);
-      setBookingResult(result);
+        setBookingResult(result);
+      } catch (err) {
+        // createBooking's guest-mode path already returns {success:false,...}
+        // instead of throwing, but the real API path can still reject
+        // (network failure, unexpected non-ApiError exception, etc.) --
+        // catch that here so the UI shows the failure panel instead of
+        // hanging on the processing spinner forever.
+        setBookingResult({
+          success: false,
+          reason: err.message || 'Booking failed. Please try again.'
+        });
+      } finally {
+        setIsProcessing(false);
+      }
     }, 2000);
   };
 
@@ -118,8 +187,21 @@ export default function EventDetails() {
           </div>
           <div className="flex items-center gap-2 bg-[#1f2028]/95 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 shadow-xl self-start md:self-auto font-mono text-xs">
             <Clock className="w-4 h-4 text-purple-400" />
-            <span className="text-gray-400">Dynamic Lock:</span>
-            <span className="text-purple-400 font-bold">{formatTime(priceLockTime)}</span>
+            {userProfile.isGuest ? (
+              <>
+                <span className="text-gray-400">Dynamic Lock:</span>
+                <span className="text-gray-500 font-semibold">Sign in to lock price</span>
+              </>
+            ) : priceLockStatus === 'error' ? (
+              <span className="text-rose-400 font-semibold">Price lock unavailable</span>
+            ) : priceLockStatus === 'loading' && !priceLock ? (
+              <span className="text-gray-400">Locking price…</span>
+            ) : (
+              <>
+                <span className="text-gray-400">Dynamic Lock:</span>
+                <span className="text-purple-400 font-bold">{formatTime(remainingSecs)}</span>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -211,6 +293,11 @@ export default function EventDetails() {
               <div className="space-y-0.5">
                 <span className="text-[10px] text-gray-500 block uppercase font-mono">Current dynamic rate</span>
                 <span className="text-3xl font-extrabold text-white font-mono">${event.price}</span>
+                {priceLock && priceLock.price !== event.price && (
+                  <span className="text-[10px] text-emerald-400 block font-mono">
+                    Locked for you at ${priceLock.price} until {formatTime(remainingSecs)}
+                  </span>
+                )}
               </div>
               <div className="text-right">
                 <span className="text-[10px] text-gray-500 block uppercase font-mono">Base reference</span>
@@ -323,14 +410,14 @@ export default function EventDetails() {
               {/* Price Calculation */}
               <div className="flex justify-between items-center pt-3 border-t border-white/5 text-xs font-semibold">
                 <span className="text-gray-400">Total Price:</span>
-                <span className="text-lg font-bold text-white font-mono">${(event.price * quantity).toFixed(2)}</span>
+                <span className="text-lg font-bold text-white font-mono">${(effectivePrice * quantity).toFixed(2)}</span>
               </div>
 
               <button
                 type="submit"
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3.5 px-4 rounded-xl text-xs uppercase tracking-wider transition-all shadow-md shadow-purple-500/10 hover:shadow-purple-500/20 active:translate-y-0.5"
               >
-                Proceed to Payment
+                {userProfile.isGuest ? 'Sign In to Book' : 'Proceed to Payment'}
               </button>
             </form>
 
@@ -389,7 +476,7 @@ export default function EventDetails() {
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] text-gray-500 uppercase font-mono block">Amount</span>
-                      <span className="text-sm font-bold text-white font-mono">${(event.price * quantity).toFixed(2)}</span>
+                      <span className="text-sm font-bold text-white font-mono">${(effectivePrice * quantity).toFixed(2)}</span>
                     </div>
                   </div>
 
