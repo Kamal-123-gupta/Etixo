@@ -2,14 +2,51 @@ import React, { useContext, useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { ArrowLeft, MapPin, Calendar, Clock, AlertTriangle, CheckCircle, Shield, X, CreditCard } from 'lucide-react';
-import { lockPriceApi } from '../lib/api';
+import { lockPriceApi, fetchEventById } from '../lib/api';
 
 export default function EventDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { events, createBooking, userProfile } = useContext(AppContext);
 
-  const event = events.find(e => e.id === id);
+  const contextEvent = events.find(e => e.id === id);
+
+  // GET /events (the source of the `events` list in context) defaults to a
+  // 20-item page ordered by event_datetime -- the same pagination gap
+  // already worked around for Discovery search and Personalization
+  // results. A freshly created event (or any event whose date puts it
+  // outside that first page) was silently missing from `events` entirely,
+  // so opening its detail page directly always fell through to "Event Not
+  // Found" even though it existed in the DB. Fall back to fetching it
+  // directly by ID when it's not in the loaded page.
+  const [fetchedEvent, setFetchedEvent] = useState(null);
+  const [eventFetchStatus, setEventFetchStatus] = useState('idle'); // 'idle' | 'loading' | 'done' | 'error'
+
+  useEffect(() => {
+    if (contextEvent) {
+      setFetchedEvent(null);
+      setEventFetchStatus('idle');
+      return;
+    }
+    let cancelled = false;
+    setEventFetchStatus('loading');
+    fetchEventById(id)
+      .then((data) => {
+        if (cancelled) return;
+        setFetchedEvent(data);
+        setEventFetchStatus('done');
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('Failed to load event', err);
+        setEventFetchStatus('error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, contextEvent]);
+
+  const event = contextEvent || fetchedEvent;
 
   // States
   const [quantity, setQuantity] = useState(1);
@@ -92,6 +129,14 @@ export default function EventDetails() {
   const effectivePrice = priceLock?.price ?? event?.price;
 
   if (!event) {
+    if (eventFetchStatus === 'loading') {
+      return (
+        <div className="flex-1 bg-[#16171d] text-gray-100 flex flex-col items-center justify-center p-8">
+          <p className="text-gray-400 text-sm">Loading event...</p>
+        </div>
+      );
+    }
+
     return (
       <div className="flex-1 bg-[#16171d] text-gray-100 flex flex-col items-center justify-center p-8">
         <AlertTriangle className="w-12 h-12 text-red-500 mb-4 animate-bounce" />
@@ -220,7 +265,9 @@ export default function EventDetails() {
               </div>
               <div>
                 <span className="text-[10px] text-gray-500 font-mono block">VENUE</span>
-                <span className="text-xs font-semibold text-gray-200">{event.location}</span>
+                <span className="text-xs font-semibold text-gray-200">
+                  {[event.venueName, event.location].filter(Boolean).join(' — ') || 'Location TBA'}
+                </span>
               </div>
             </div>
             <div className="flex items-center gap-3 border-t sm:border-t-0 sm:border-l border-white/5 pt-3 sm:pt-0 sm:pl-4">

@@ -90,7 +90,7 @@ const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&auto=format&fit=crop&q=60";
 
 /** Shared mapping for fields present on EventOut (both list and detail responses). */
-function adaptEventCore(apiEvent) {
+export function adaptEventCore(apiEvent) {
   const { date, time } = splitDateTime(apiEvent.event_datetime);
   return {
     id: String(apiEvent.id),
@@ -99,6 +99,7 @@ function adaptEventCore(apiEvent) {
     date,
     time,
     location: formatLocation(apiEvent.venue_city, apiEvent.venue_state),
+    venueName: apiEvent.venue_name || null,
     category: apiEvent.category,
     basePrice: apiEvent.base_price,
     price: apiEvent.current_price,
@@ -265,9 +266,39 @@ export async function lockPriceApi(eventId) {
   return apiFetch(`/events/${eventId}/price-lock`, { method: "POST" });
 }
 
-
+/**
+ * Personalization Agent recommendations. Requires a real logged-in user id
+ * -- the backend has no guest/anonymous recommendation path (there's no
+ * meaningful profile to rank against without one).
+ *
+ * Same partial-shape situation as searchEvents(): the response rows come
+ * from ContentBasedRecommender.recommend() (event_id/name/category/
+ * venue_city/price_estimated/event_popularity_score/score), NOT the full
+ * EventOut shape GET /events returns. Returns just the ranked event IDs;
+ * callers should map those onto full event objects already loaded, same
+ * as searchEvents.
+ */
 export async function fetchRecommendations(userId, { topN = 10 } = {}) {
   const params = new URLSearchParams({ userId: String(userId), top_n: String(topN) });
   const data = await apiFetch(`/agents/recommendations?${params.toString()}`);
   return data.results.map((r) => String(r.event_id));
+}
+
+/**
+ * Marketing Campaign Agent: launches a real campaign (POST
+ * /organizer/events/{id}/campaigns) and persists it -- not the old
+ * client-only mock that faked sent/engagement numbers and vanished on
+ * reload. `channel` must be one of the backend's CampaignChannel enum
+ * values: 'whatsapp' | 'email' | 'x'.
+ */
+export async function launchCampaignApi(eventId, channel) {
+  return apiFetch(`/organizer/events/${eventId}/campaigns`, {
+    method: "POST",
+    body: JSON.stringify({ channel }),
+  });
+}
+
+/** All campaigns launched so far for one organizer-owned event. */
+export async function fetchEventCampaigns(eventId) {
+  return apiFetch(`/organizer/events/${eventId}/campaigns`);
 }

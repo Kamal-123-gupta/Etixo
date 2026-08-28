@@ -108,11 +108,12 @@ def launch_campaign(
         sent_count=generated.sent_count,
         engagement_rate=generated.engagement_rate,
     )
-    # `warnings` has no DB column -- it's a per-request signal, not
-    # persisted state -- but setting it as a plain attribute here lets
-    # CampaignOut (from_attributes=True) pick it up via normal attribute
+    # `warnings`/`source` have no DB column -- they're per-request signals,
+    # not persisted state -- but setting them as plain attributes here lets
+    # CampaignOut (from_attributes=True) pick them up via normal attribute
     # access for THIS response, without needing a migration.
     campaign.warnings = generated.warnings
+    campaign.source = generated.source
     db.add(campaign)
     log_message = (
         f"Launched {payload.channel.value} campaign for '{event.title}' via {generated.source} "

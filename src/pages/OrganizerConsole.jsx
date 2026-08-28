@@ -1,6 +1,6 @@
 import React, { useContext, useState, useMemo, useEffect  } from 'react';
 import { AppContext } from '../context/AppContext';
-import { generateEventContent, generateAndApplyEventContent, fetchOrganizerInsights } from '../lib/api';
+import { generateEventContent, generateAndApplyEventContent, fetchOrganizerInsights, launchCampaignApi, fetchEventCampaigns } from '../lib/api';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 export default function OrganizerConsole() {
-  const { events, marketingCampaigns, addCustomEvent, triggerMarketingCampaign } = useContext(AppContext);
+  const { events, addCustomEvent } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState('insights');
   const [organizerInsights, setOrganizerInsights] = useState(null);
   const [insightsLoading, setInsightsLoading] = useState(true);
@@ -52,16 +52,129 @@ export default function OrganizerConsole() {
 
   // Event Creator Form States
   const [newTitle, setNewTitle] = useState('');
-  const [newCategory, setNewCategory] = useState('Tech');
+
+  // Category: a generic top-level group (Sports/Music/Arts/Comedy/Other)
+  // instead of either the old fake Tech/Music/Comedy/Arts list or the raw
+  // granular sport-only taxonomy -- picking "Sports" reveals a second
+  // dropdown of the REAL existing sport categories (football/basketball/
+  // baseball/hockey/stadium_tours) so those events still match exactly
+  // what Discovery/Personalization already index on; the other groups are
+  // forward-looking category values with no existing catalog rows yet, so
+  // they're saved as typed with no sub-list to match against.
+  //
+  // Deriving the Sports sub-list from every distinct category in `events`
+  // (as this originally did) meant any stray non-sport category already
+  // in the DB -- e.g. a "Tech" event created via testing before this
+  // dropdown existed -- silently showed up as a "sport type" option.
+  // Instead: only known real sport categories populate the Sports
+  // sub-list; anything else already present in the catalog (like "Tech")
+  // is promoted to its own top-level group automatically, rather than
+  // being hidden inside Sports or requiring a hardcoded fix per stray value.
+  const KNOWN_SPORT_CATEGORIES = ['football', 'basketball', 'baseball', 'hockey', 'stadium_tours'];
+  const FIXED_CATEGORY_GROUPS = ['Sports', 'Music', 'Arts', 'Comedy', 'Other'];
+  const realSportTypes = useMemo(() => {
+    return [...new Set(events.map((evt) => evt.category))]
+      .filter((cat) => cat && KNOWN_SPORT_CATEGORIES.includes(cat))
+      .sort();
+  }, [events]);
+  const extraCategoryGroups = useMemo(() => {
+    return [...new Set(events.map((evt) => evt.category))]
+      .filter((cat) => cat && !KNOWN_SPORT_CATEGORIES.includes(cat) && !FIXED_CATEGORY_GROUPS.includes(cat))
+      .sort();
+  }, [events]);
+  const CATEGORY_GROUPS = useMemo(() => {
+    return ['Sports', 'Music', 'Arts', 'Comedy', ...extraCategoryGroups, 'Other'];
+  }, [extraCategoryGroups]);
+  const [newCategoryGroup, setNewCategoryGroup] = useState('Sports');
+  const [newSportType, setNewSportType] = useState('');
+  useEffect(() => {
+    if (!newSportType && realSportTypes.length > 0) {
+      setNewSportType(realSportTypes[0]);
+    }
+  }, [realSportTypes, newSportType]);
+  // The value actually sent to the backend as `category`.
+  const resolvedCategory = newCategoryGroup === 'Sports' ? newSportType : newCategoryGroup;
+
   const [newBasePrice, setNewBasePrice] = useState('45');
   const [newTotalTickets, setNewTotalTickets] = useState('300');
-  const [newLocation, setNewLocation] = useState('Bengaluru, Outer Ring Road');
+
+  // Date & time -- previously not collected by this form at all, so every
+  // organizer-created event silently got event_datetime=null even though
+  // the backend (EventCreate.event_datetime) fully supports it.
+  const [newDate, setNewDate] = useState('');
+  const [newTime, setNewTime] = useState('19:00');
+
+  // Venue -- split into name/city/state instead of one free-text field.
+  // The old single field only ever got sent as venue_name; venue_city was
+  // never populated, so formatLocation(city, state) always returned an
+  // empty string and the listing showed a blank location after the venue
+  // name. City is what actually drives the visible location on cards/
+  // detail pages, so it's the one marked required here.
+  const [newVenueName, setNewVenueName] = useState('');
+  const [newVenueCity, setNewVenueCity] = useState('');
+  const [newVenueState, setNewVenueState] = useState('');
+
+  // Manual description -- previously there was no way to opt out of the
+  // AI draft: handlePublish always called generateAndApplyEventContent()
+  // after creating the event, silently overwriting anything the organizer
+  // might have wanted to write themselves (there wasn't even a field to
+  // write it in). Now: if the organizer fills this in (either by typing,
+  // or by using "Draft with AI" and keeping/editing the result), that
+  // text is sent directly at creation time and the auto-generate-and-
+  // apply step is skipped. Leaving it blank keeps the old auto-AI flow.
+  const [newDescription, setNewDescription] = useState('');
+
   const [newImage, setNewImage] = useState('');
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [aiDraftPreview, setAiDraftPreview] = useState(null);
 
   // Marketing Form States
   const [selectedMarketingEventId, setSelectedMarketingEventId] = useState(events[0]?.id || '');
+  const [selectedChannel, setSelectedChannel] = useState('whatsapp');
+
+  // Real Marketing Campaign Agent state (POST/GET
+  // /organizer/events/{id}/campaigns) -- replaces the old client-only mock
+  // that faked sent-count/engagement numbers and reset on every reload.
+  const [orgCampaigns, setOrgCampaigns] = useState([]);
+  const [campaignsLoading, setCampaignsLoading] = useState(true);
+  const [campaignsError, setCampaignsError] = useState(null);
+  const [isLaunchingCampaign, setIsLaunchingCampaign] = useState(false);
+  const [launchError, setLaunchError] = useState(null);
+
+  // Load campaign history for every event this organizer owns, once their
+  // events are known via /organizer/insights. Small N of events expected
+  // for a demo-scale organizer account, so one call per event is fine.
+  useEffect(() => {
+    const eventIds = organizerInsights?.events?.map((e) => e.event_id);
+    if (!eventIds || eventIds.length === 0) {
+      setCampaignsLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setCampaignsLoading(true);
+    Promise.all(eventIds.map((id) => fetchEventCampaigns(id).catch(() => [])))
+      .then((results) => {
+        if (cancelled) return;
+        const titleByEventId = new Map(
+          organizerInsights.events.map((e) => [e.event_id, e.title])
+        );
+        const merged = results
+          .flat()
+          .map((camp) => ({ ...camp, eventTitle: titleByEventId.get(camp.event_id) || 'Unknown Event' }))
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setOrgCampaigns(merged);
+        setCampaignsError(null);
+      })
+      .catch((err) => {
+        if (!cancelled) setCampaignsError(err.message || 'Could not load campaigns.');
+      })
+      .finally(() => {
+        if (!cancelled) setCampaignsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [organizerInsights]);
 
   // Operations checklist states
   const [opsTasks, setOpsTasks] = useState([
@@ -93,6 +206,16 @@ export default function OrganizerConsole() {
   // }, [events]);
 
   const totalTicketsSold = organizerInsights?.total_tickets_sold ?? 0;
+
+  // Real per-event demand_tier tally from the Dynamic Pricing Agent (via
+  // /organizer/insights), replacing the old hardcoded "1.15x Surge" label
+  // that was never derived from any actual pricing data.
+  const elevatedPricingCount = useMemo(() => {
+    if (!organizerInsights?.events) return 0;
+    return organizerInsights.events.filter(
+      (e) => e.demand_tier === 'high' || e.demand_tier === 'surge'
+    ).length;
+  }, [organizerInsights]);
 
   // Charts Data Prep
   const salesVelocityData = useMemo(() => {
@@ -126,28 +249,6 @@ export default function OrganizerConsole() {
   // Colors for Recharts Pie
   const COLORS = ['#a855f7', '#6366f1', '#10b981', '#f59e0b', '#ec4899'];
 
-  // AI draft generator triggers
-  // const handleAIDraft = () => {
-  //   if (!newTitle) return;
-  //   setIsGeneratingAI(true);
-  //   setAiDraftPreview(null);
-
-  //   // Simulate Generative LLM delay
-  //   setTimeout(() => {
-  //     setIsGeneratingAI(false);
-  //     setAiDraftPreview({
-  //       description: `This is a pre-drafted event description generated automatically for "${newTitle}". This is a ${newCategory} category event scheduled at ${newLocation}. It will host high-quality talks, network mixers, and interactive workshop breakout sessions.`,
-  //       faqs: [
-  //         { question: 'What is included in the ticket?', answer: 'Full access passes, lunch catering, and verified smart certificate tags.' },
-  //         { question: 'Is parking available?', answer: 'Yes, secure valet parking is integrated with registration validation.' }
-  //       ],
-  //       terms: [
-  //         'No transfers allowed within 24 hours of start.',
-  //         'Please present the QR code at checking terminals.'
-  //       ]
-  //     });
-  //   }, 1500);
-  // };
   const handleAIDraft = async () => {
     if (!newTitle.trim()) return;
 
@@ -157,9 +258,9 @@ export default function OrganizerConsole() {
     try {
       const generated = await generateEventContent({
         title: newTitle.trim(),
-        category: newCategory,
-        venue_city: newLocation || null,
-        venue_state: null,
+        category: resolvedCategory,
+        venue_city: newVenueCity || null,
+        venue_state: newVenueState || null,
         base_price: Number(newBasePrice) || 0,
       });
 
@@ -167,7 +268,15 @@ export default function OrganizerConsole() {
         description: generated.description || '',
         faqs: generated.faqs || [],
         terms: generated.terms || [],
+        source: generated.source,
+        warnings: generated.warnings || [],
       });
+      // Populate the editable description field so the organizer can
+      // review/tweak it before publishing, instead of it only living in
+      // the read-only preview pane (see handlePublish for why this
+      // matters -- a non-empty description here skips the redundant
+      // auto-generate-and-apply call at publish time).
+      setNewDescription(generated.description || '');
     } catch (error) {
       console.error("AI event generation failed:", error);
 
@@ -175,67 +284,85 @@ export default function OrganizerConsole() {
         description: "Unable to generate event content right now.",
         faqs: [],
         terms: [],
+        source: null,
+        warnings: [],
       });
     } finally {
       setIsGeneratingAI(false);
     }
   };
 
-  // const handlePublish = (e) => {
-  //   e.preventDefault();
-  //   if (!newTitle) return;
-
-  //   addCustomEvent({
-  //     title: newTitle,
-  //     category: newCategory,
-  //     basePrice: newBasePrice,
-  //     totalTickets: newTotalTickets,
-  //     location: newLocation,
-  //     image: newImage
-  //   });
-
-  //   // Reset Form
-  //   setNewTitle('');
-  //   setNewImage('');
-  //   setAiDraftPreview(null);
-  // };
+  const [publishError, setPublishError] = useState(null);
 
   const handlePublish = async (e) => {
     e.preventDefault();
 
-    if (!newTitle.trim()) return;
+    if (!newTitle.trim() || !resolvedCategory || !newVenueCity.trim() || !newDate) return;
 
+    setPublishError(null);
     try {
-      // Step 1: Create the actual event in the database
+      // Step 1: Create the actual event in the database. Sending the
+      // organizer's own description (if they wrote/kept one) directly
+      // here, rather than always leaving it blank for step 2 to fill in.
       const createdEvent = await addCustomEvent({
         title: newTitle.trim(),
-        category: newCategory,
+        category: resolvedCategory,
+        description: newDescription.trim() || null,
         basePrice: newBasePrice,
         totalTickets: newTotalTickets,
-        location: newLocation,
+        date: newDate,
+        time: newTime,
+        location: newVenueName.trim() || null, // -> venue_name
+        venue_city: newVenueCity.trim(),
+        venue_state: newVenueState.trim() || null,
         image: newImage
       });
 
-      // Step 2: Generate and persist AI content for that event
-      await generateAndApplyEventContent(createdEvent.id);
+      // Step 2: only auto-generate-and-apply AI content (description +
+      // FAQs + terms) when the organizer left the description blank --
+      // otherwise this would silently overwrite the text they just chose
+      // to keep. A manually-described event just won't have FAQs/terms
+      // (EventDetailOut already defaults those to empty lists).
+      if (!newDescription.trim()) {
+        await generateAndApplyEventContent(createdEvent.id);
+      }
 
-      // Reset form only after both operations succeed
+      // Reset form only after everything succeeds
       setNewTitle('');
+      setNewDescription('');
+      setNewVenueName('');
+      setNewVenueCity('');
+      setNewVenueState('');
+      setNewDate('');
+      setNewTime('19:00');
       setNewImage('');
       setAiDraftPreview(null);
 
       console.log(
-        `Event "${createdEvent.title}" published successfully with AI content.`
+        `Event "${createdEvent.title}" published successfully.`
       );
     } catch (error) {
       console.error("Failed to publish event:", error);
+      setPublishError(error.message || 'Failed to publish event. Please try again.');
     }
   };
 
-  const handleLaunchCampaign = () => {
-    const targetEvent = events.find(e => e.id === selectedMarketingEventId);
-    if (targetEvent) {
-      triggerMarketingCampaign(targetEvent);
+  const handleLaunchCampaign = async () => {
+    if (!selectedMarketingEventId) return;
+    setIsLaunchingCampaign(true);
+    setLaunchError(null);
+    try {
+      const campaign = await launchCampaignApi(selectedMarketingEventId, selectedChannel);
+      const targetEvent = events.find((e) => e.id === selectedMarketingEventId);
+      setOrgCampaigns((prev) => [
+        { ...campaign, eventTitle: targetEvent?.title || 'Unknown Event' },
+        ...prev,
+      ]);
+    } catch (err) {
+      console.error('Failed to launch campaign:', err);
+      setLaunchError(err.message || 'Campaign launch failed. Please try again.');
+    } finally {
+      setIsLaunchingCampaign(false);
     }
   };
 
@@ -322,7 +449,7 @@ export default function OrganizerConsole() {
               </div>
               <div>
                 <span className="text-[10px] text-gray-500 font-mono block uppercase">Active Campaigns</span>
-                <span className="text-xl font-bold text-white font-mono">{marketingCampaigns.length} Launches</span>
+                <span className="text-xl font-bold text-white font-mono">{orgCampaigns.length} Launches</span>
               </div>
             </div>
 
@@ -331,8 +458,10 @@ export default function OrganizerConsole() {
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-[10px] text-gray-500 font-mono block uppercase">Pricing Surcharges</span>
-                <span className="text-xl font-bold text-white font-mono">1.15x Surge</span>
+                <span className="text-[10px] text-gray-500 font-mono block uppercase">Elevated Pricing</span>
+                <span className="text-xl font-bold text-white font-mono">
+                  {elevatedPricingCount} / {organizerInsights?.events?.length ?? 0} Events
+                </span>
               </div>
             </div>
           </div>
@@ -451,17 +580,31 @@ export default function OrganizerConsole() {
                 <div className="space-y-1">
                   <label className="text-xs text-gray-400 font-mono">Category</label>
                   <select
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
+                    value={newCategoryGroup}
+                    onChange={(e) => setNewCategoryGroup(e.target.value)}
                     className="w-full bg-[#16171d] border border-white/5 rounded-xl px-3 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-purple-500 transition-colors"
                   >
-                    <option value="Tech">Tech</option>
-                    <option value="Music">Music</option>
-                    <option value="Comedy">Comedy</option>
-                    <option value="Arts">Arts</option>
+                    {CATEGORY_GROUPS.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
                   </select>
                 </div>
               </div>
+
+              {newCategoryGroup === 'Sports' && (
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-400 font-mono">Sport Type</label>
+                  <select
+                    value={newSportType}
+                    onChange={(e) => setNewSportType(e.target.value)}
+                    className="w-full bg-[#16171d] border border-white/5 rounded-xl px-3 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-purple-500 transition-colors"
+                  >
+                    {realSportTypes.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
@@ -486,15 +629,77 @@ export default function OrganizerConsole() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-400 font-mono">Event Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={newDate}
+                    onChange={(e) => setNewDate(e.target.value)}
+                    className="w-full bg-[#16171d] border border-white/5 rounded-xl px-3 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-purple-500 transition-colors font-mono"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-400 font-mono">Event Time</label>
+                  <input
+                    type="time"
+                    required
+                    value={newTime}
+                    onChange={(e) => setNewTime(e.target.value)}
+                    className="w-full bg-[#16171d] border border-white/5 rounded-xl px-3 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-purple-500 transition-colors font-mono"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-1">
-                <label className="text-xs text-gray-400 font-mono">Location Venue</label>
+                <label className="text-xs text-gray-400 font-mono">Venue Name (Optional)</label>
                 <input
                   type="text"
-                  required
                   placeholder="e.g. Pune Art Gallery"
-                  value={newLocation}
-                  onChange={(e) => setNewLocation(e.target.value)}
+                  value={newVenueName}
+                  onChange={(e) => setNewVenueName(e.target.value)}
                   className="w-full bg-[#16171d] border border-white/5 rounded-xl px-3 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-purple-500 transition-colors"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-400 font-mono">City</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Bengaluru"
+                    value={newVenueCity}
+                    onChange={(e) => setNewVenueCity(e.target.value)}
+                    className="w-full bg-[#16171d] border border-white/5 rounded-xl px-3 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-purple-500 transition-colors"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-400 font-mono">State (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Karnataka"
+                    value={newVenueState}
+                    onChange={(e) => setNewVenueState(e.target.value)}
+                    className="w-full bg-[#16171d] border border-white/5 rounded-xl px-3 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-purple-500 transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-gray-400 font-mono">Description</label>
+                  <span className="text-[10px] text-gray-500 font-mono">
+                    {newDescription.trim() ? 'Will publish as written' : 'Blank \u2192 AI will auto-draft on publish'}
+                  </span>
+                </div>
+                <textarea
+                  rows={3}
+                  placeholder="Write your own description, or leave blank and use 'Draft Event with AI' below to generate one (you can still edit it after)."
+                  value={newDescription}
+                  onChange={(e) => setNewDescription(e.target.value)}
+                  className="w-full bg-[#16171d] border border-white/5 rounded-xl px-3 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-purple-500 transition-colors resize-none"
                 />
               </div>
 
@@ -508,6 +713,12 @@ export default function OrganizerConsole() {
                   className="w-full bg-[#16171d] border border-white/5 rounded-xl px-3 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-purple-500 transition-colors"
                 />
               </div>
+
+              {publishError && (
+                <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 text-xs text-rose-400">
+                  {publishError}
+                </div>
+              )}
 
               <div className="flex gap-3 pt-3">
                 <button
@@ -540,9 +751,26 @@ export default function OrganizerConsole() {
 
               {aiDraftPreview ? (
                 <div className="space-y-4 text-xs text-gray-400 font-medium">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-semibold ${
+                      aiDraftPreview.source === 'llm'
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                    }`}>
+                      {aiDraftPreview.source === 'llm' ? '\u2728 Generated via LLM' : aiDraftPreview.source === 'template' ? 'Template Fallback (no LLM configured)' : 'Generation Failed'}
+                    </span>
+                  </div>
+
+                  {aiDraftPreview.warnings && aiDraftPreview.warnings.length > 0 && (
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 text-[10px] text-amber-400">
+                      {aiDraftPreview.warnings.join(' \u00b7 ')}
+                    </div>
+                  )}
+
                   <div className="space-y-1">
                     <span className="text-[10px] text-gray-500 uppercase font-mono block">Auto-Generated description</span>
                     <p className="leading-relaxed bg-[#16171d] p-3 rounded-xl border border-white/5">{aiDraftPreview.description}</p>
+                    <span className="text-[9px] text-gray-500 block">Copied into the Description field above -- edit it there before publishing if needed.</span>
                   </div>
                   
                   <div className="space-y-1.5">
@@ -563,6 +791,10 @@ export default function OrganizerConsole() {
                       ))}
                     </ul>
                   </div>
+
+                  <p className="text-[9px] text-gray-500 leading-relaxed">
+                    Note: FAQs/T&Cs shown here only get saved if you publish with the Description field blank (which re-runs full AI generation and applies it, including these). If you keep a written description, only that description text is saved -- no FAQs/terms.
+                  </p>
                 </div>
               ) : (
                 <div className="text-center py-12 text-xs text-gray-500">
@@ -604,16 +836,36 @@ export default function OrganizerConsole() {
                 </select>
               </div>
 
+              <div className="space-y-1">
+                <label className="text-xs text-gray-400 font-mono block">Channel</label>
+                <select
+                  value={selectedChannel}
+                  onChange={(e) => setSelectedChannel(e.target.value)}
+                  className="w-full bg-[#16171d] border border-white/5 rounded-xl px-3 py-2.5 text-xs text-gray-200 focus:outline-none focus:border-purple-500 transition-colors"
+                >
+                  <option value="whatsapp">WhatsApp</option>
+                  <option value="email">Email</option>
+                  <option value="x">X (Twitter)</option>
+                </select>
+              </div>
+
               <div className="bg-[#16171d] p-3 rounded-xl border border-white/5 text-xs text-gray-400 leading-relaxed font-medium">
                 <span className="font-bold text-[9px] text-purple-400 font-mono uppercase block mb-1">Agent Action Flow</span>
                 Our marketing agent parses target details, drafts tailored newsletters/social pushes, tracks email bounces, and adjusts channel splits dynamically to boost ticket sales velocity.
               </div>
 
+              {launchError && (
+                <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 text-xs text-rose-400">
+                  {launchError}
+                </div>
+              )}
+
               <button
                 onClick={handleLaunchCampaign}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5"
+                disabled={isLaunchingCampaign || !selectedMarketingEventId}
+                className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5"
               >
-                <PlayCircle className="w-4 h-4" /> Launch AI Campaign
+                <PlayCircle className="w-4 h-4" /> {isLaunchingCampaign ? 'Launching...' : 'Launch AI Campaign'}
               </button>
             </div>
           </div>
@@ -622,7 +874,7 @@ export default function OrganizerConsole() {
           <div className="lg:col-span-2 bg-[#1f2028] border border-white/5 p-6 rounded-2xl space-y-4">
             <div className="flex justify-between items-center pb-2.5 border-b border-white/5">
               <h3 className="text-base font-bold text-gray-300 m-0 uppercase tracking-wider font-mono">
-                Active Campaigns ({marketingCampaigns.length})
+                Active Campaigns ({orgCampaigns.length})
               </h3>
               <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                 Outreach Monitoring
@@ -630,31 +882,58 @@ export default function OrganizerConsole() {
             </div>
 
             <div className="space-y-4 max-h-96 overflow-y-auto pr-1">
-              {marketingCampaigns.map((camp) => (
-                <div key={camp.id} className="bg-[#16171d] p-4.5 rounded-xl border border-white/5 space-y-3 text-xs">
-                  <div className="flex justify-between items-start flex-wrap gap-2">
-                    <div className="space-y-0.5 text-left">
-                      <span className="text-[10px] text-purple-400 font-mono font-bold uppercase">{camp.channel}</span>
-                      <h4 className="font-bold text-gray-200 text-sm leading-tight m-0">{camp.title}</h4>
-                      <p className="text-gray-500 text-[10px]">Target: {camp.targetEvent}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="text-right">
-                        <span className="text-[9px] text-gray-500 font-mono block uppercase">Sent</span>
-                        <span className="font-mono font-bold text-gray-300">{camp.sentCount}</span>
+              {campaignsLoading && orgCampaigns.length === 0 ? (
+                <p className="text-xs text-gray-500 text-center py-8">Loading campaign history...</p>
+              ) : campaignsError ? (
+                <p className="text-xs text-rose-400 text-center py-8">{campaignsError}</p>
+              ) : orgCampaigns.length === 0 ? (
+                <p className="text-xs text-gray-500 text-center py-8">No campaigns launched yet. Pick an event and channel, then launch one.</p>
+              ) : (
+                orgCampaigns.map((camp) => (
+                  <div key={camp.id} className="bg-[#16171d] p-4.5 rounded-xl border border-white/5 space-y-3 text-xs">
+                    <div className="flex justify-between items-start flex-wrap gap-2">
+                      <div className="space-y-0.5 text-left">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-purple-400 font-mono font-bold uppercase">{camp.channel}</span>
+                          {camp.source && (
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-mono font-semibold ${
+                              camp.source === 'llm'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                            }`}>
+                              {camp.source === 'llm' ? 'LLM' : 'Template'}
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="font-bold text-gray-200 text-sm leading-tight m-0">{camp.eventTitle} Promo Push</h4>
+                        <p className="text-gray-500 text-[10px]">Target: {camp.eventTitle}</p>
                       </div>
-                      <div className="text-right border-l border-white/10 pl-2">
-                        <span className="text-[9px] text-gray-500 font-mono block uppercase">Engagement</span>
-                        <span className="font-mono font-bold text-emerald-400">{camp.engagementRate}</span>
+                      <div className="flex gap-2">
+                        <div className="text-right">
+                          <span className="text-[9px] text-gray-500 font-mono block uppercase">Sent</span>
+                          <span className="font-mono font-bold text-gray-300">{camp.sent_count}</span>
+                        </div>
+                        <div className="text-right border-l border-white/10 pl-2">
+                          <span className="text-[9px] text-gray-500 font-mono block uppercase">Engagement</span>
+                          <span className="font-mono font-bold text-emerald-400">
+                            {camp.engagement_rate != null ? `${(camp.engagement_rate * 100).toFixed(1)}%` : '—'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="bg-[#1f2028] p-3 rounded-lg border border-white/5 font-mono text-[10px] text-gray-400 leading-normal">
-                    {camp.content}
+                    <div className="bg-[#1f2028] p-3 rounded-lg border border-white/5 font-mono text-[10px] text-gray-400 leading-normal">
+                      {camp.content}
+                    </div>
+
+                    {camp.warnings && camp.warnings.length > 0 && (
+                      <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 text-[10px] text-amber-400">
+                        {camp.warnings.join(' · ')}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

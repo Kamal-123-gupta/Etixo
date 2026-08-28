@@ -437,7 +437,7 @@ export default function AttendeePortal() {
                       <div className="space-y-1 text-xs text-gray-400 font-medium">
                         <p className="flex items-center gap-1.5">
                           <MapPin className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                          <span>{evt.location}</span>
+                          <span>{[evt.venueName, evt.location].filter(Boolean).join(' — ') || 'Location TBA'}</span>
                         </p>
                         <p className="flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-purple-400 shrink-0" />

@@ -21,3 +21,4 @@ class CampaignOut(BaseModel):
     engagement_rate: float | None = None
     created_at: datetime
     warnings: list[str] | None = None
+    source: str | None = None  # "llm" or "template" -- which path generated this copy

@@ -10,34 +10,12 @@ import {
   fetchMyBookings,
   postCreateBooking,
   createEvent,
-  logoutUser
-  
+  logoutUser,
+  adaptEventCore,
+
 } from '../lib/api';
 
 export const AppContext = createContext();
-
-const initialCampaigns = [
-  {
-    id: 'camp-1',
-    title: 'Neon Pulse Final Push',
-    targetEvent: 'Neon Pulse: Electronic Music Festival',
-    channel: 'WhatsApp & Instagram',
-    status: 'Active',
-    sentCount: 1500,
-    engagementRate: '12.4%',
-    content: '🔥 Only 88 tickets left for the Neon Pulse Festival! Get 10% off using code SYNTH10 before prices surge again tonight!'
-  },
-  {
-    id: 'camp-2',
-    title: 'SustainTech Dev Outreach',
-    targetEvent: 'SustainTech Hackathon 2026',
-    channel: 'Email Newsletter',
-    status: 'Completed',
-    sentCount: 3000,
-    engagementRate: '8.2%',
-    content: '🌿 Build AI for the planet. Join developers at SustainTech Hackathon 2026. Top prize: $10,000 grant.'
-  }
-];
 
 const initialFraudLogs = [
   {
@@ -105,7 +83,9 @@ export const AppContextProvider = ({ children }) => {
   const [authLoading, setAuthLoading] = useState(true);
 
   const [fraudLogs, setFraudLogs] = useState(initialFraudLogs);
-  const [marketingCampaigns, setMarketingCampaigns] = useState(initialCampaigns);
+  // marketingCampaigns state removed -- Marketing Hub now sources its
+  // campaign list live from the real backend (see OrganizerConsole.jsx),
+  // not from client-only mock state.
   const [notifications, setNotifications] = useState(initialNotifications);
   
   // Chat History with initial Welcome Message from Support Agent
@@ -268,32 +248,10 @@ export const AppContextProvider = ({ children }) => {
     };
   };
 
-  // Agent: Marketing Campaign Agent
-  const triggerMarketingCampaign = (event) => {
-    const channels = ['WhatsApp Boost', 'Email Blast', 'X (Twitter) Campaign'];
-    const selectedChannel = channels[Math.floor(Math.random() * channels.length)];
-    const campaignId = `camp-${Date.now()}`;
-    
-    const messages = {
-      'WhatsApp Boost': `⚡ AI Alert: Bookings for "${event.title}" are peaking! Demand is currently ${event.demand}. Secure your spot now at $${event.price}! 🎟️`,
-      'Email Blast': `Subject: Exclusive AI Recommendation - ${event.title}\n\nDear Attendee, Based on your preference for ${event.category}, our Personalization Agent recommends securing tickets for "${event.title}" at $${event.price} before demand drives prices up!`,
-      'X (Twitter) Campaign': `Trends show high demand for #${event.title.replace(/\s+/g, '')}! Live dynamic pricing is active ($${event.price}). Reserve your pass today! 🤖📈`
-    };
-
-    const newCampaign = {
-      id: campaignId,
-      title: `${event.title} Promo Push`,
-      targetEvent: event.title,
-      channel: selectedChannel,
-      status: 'Active',
-      sentCount: Math.floor(Math.random() * 2000) + 500,
-      engagementRate: `${(Math.random() * 8 + 4).toFixed(1)}%`,
-      content: messages[selectedChannel]
-    };
-
-    setMarketingCampaigns(prev => [newCampaign, ...prev]);
-    triggerSystemNotification(`Marketing Agent: Created "${newCampaign.title}" campaign on ${selectedChannel}.`, 'marketing');
-  };
+  // Marketing Campaign Agent is wired directly in OrganizerConsole.jsx via
+  // the real POST /organizer/events/{id}/campaigns endpoint -- removed the
+  // client-side mock that used to live here (random channel pick, fake
+  // sent/engagement numbers, never persisted anywhere).
 
   // Agent: Fraud Detection Agent Check & Ticket Booking
   const createBooking = async (eventId, quantity, paymentDetails) => {
@@ -510,7 +468,7 @@ export const AppContextProvider = ({ children }) => {
 
   const addCustomEvent = async (eventData) => {
   try {
-    const createdEvent = await createEvent({
+    const rawCreatedEvent = await createEvent({
       title: eventData.title,
       description: eventData.description || null,
       category: eventData.category,
@@ -527,8 +485,25 @@ export const AppContextProvider = ({ children }) => {
       image_url: eventData.image || null,
     });
 
+    // POST /events returns the raw backend shape (snake_case), not the
+    // adapted frontend shape (.location/.price/.demand/etc.) every other
+    // item in `events` uses -- adapt it before it goes anywhere near
+    // component state, or it'll render as blank/undefined wherever it's
+    // displayed.
+    const createdEvent = adaptEventCore(rawCreatedEvent);
+
+    // GET /events defaults to a max page of 100 (see fetchEvents' comment
+    // in api.js), but this catalog has 1000+ events ordered by
+    // event_datetime -- so a freshly created event is almost always
+    // outside that page and fetchEvents() alone won't include it. That
+    // was the actual cause of "created fine, but doesn't show up or open
+    // from the attendee listing": the event existed in the DB the whole
+    // time, it just never made it into the frontend's loaded event list.
+    // Explicitly merge the real created event in (deduped, up front)
+    // instead of trusting the refetch to happen to contain it.
     const updatedEvents = await fetchEvents();
-    setEvents(updatedEvents);
+    const withoutDup = updatedEvents.filter((e) => e.id !== createdEvent.id);
+    setEvents([createdEvent, ...withoutDup]);
 
     triggerSystemNotification(
       `Event Creator: Created event "${createdEvent.title}".`,
@@ -562,13 +537,11 @@ export const AppContextProvider = ({ children }) => {
         bookings,
         userProfile,
         fraudLogs,
-        marketingCampaigns,
         notifications,
         supportChat,
         createBooking,
         sendSupportMessage,
         addCustomEvent,
-        triggerMarketingCampaign,
         clearUnreadNotifications,
         setUserProfile,
         authLoading,
