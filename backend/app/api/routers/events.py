@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -21,6 +23,7 @@ def list_events(
     city: str | None = None,
     state: str | None = None,
     max_price: float | None = None,
+    include_past: bool = False,
     limit: int = Query(default=20, le=100),
     offset: int = 0,
     db: Session = Depends(get_db),
@@ -34,6 +37,16 @@ def list_events(
         q = q.filter(Event.venue_state.ilike(state))
     if max_price is not None:
         q = q.filter(Event.current_price <= max_price)
+    if not include_past:
+        # Default: only events that haven't happened yet, or have no date
+        # set at all (never treated as "past" -- there's nothing to compare
+        # against). Events are never deleted when their date passes (see
+        # Event.status) -- this only affects what shows up in the general
+        # browse listing. Booking history and direct-by-id lookups
+        # (GET /events/{id}) are completely unaffected by this filter, so a
+        # past event a user actually booked is still fully viewable.
+        now = datetime.now(timezone.utc)
+        q = q.filter((Event.event_datetime.is_(None)) | (Event.event_datetime >= now))
     return q.order_by(Event.event_datetime.asc()).offset(offset).limit(limit).all()
 
 

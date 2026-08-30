@@ -28,7 +28,17 @@ from app.models.user import Preference, User
 
 
 def events_dataframe(db: Session) -> pd.DataFrame:
-    rows = db.query(Event).all()
+    # Only upcoming (or undated) events are candidates for search/
+    # recommendation results -- there's no legitimate reason to surface a
+    # past event for someone trying to find something to book. Past events
+    # are never deleted (see Event.status), so this is purely a filter on
+    # what these two agents consider, not a statement about what exists.
+    now = datetime.now(timezone.utc)
+    rows = (
+        db.query(Event)
+        .filter((Event.event_datetime.is_(None)) | (Event.event_datetime >= now))
+        .all()
+    )
     if not rows:
         return pd.DataFrame(
             columns=[

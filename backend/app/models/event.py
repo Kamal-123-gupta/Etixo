@@ -64,6 +64,23 @@ class Event(Base):
     bookings: Mapped[list["Booking"]] = relationship(back_populates="event")
     campaigns: Mapped[list["Campaign"]] = relationship(back_populates="event", cascade="all, delete-orphan")
 
+    @property
+    def status(self) -> str:
+        """"upcoming" | "past" | "tbd" (no date set), computed live from
+        event_datetime rather than stored -- so it's always correct down to
+        the second, with no separate cron/background job needed to keep a
+        persisted column in sync (and nothing to drift if that job ever
+        stops running). Events are never deleted or hidden from the DB when
+        they go "past": booking history (Booking.event_id) needs the row to
+        keep existing regardless of the date, so this is purely informational/
+        filterable, not a lifecycle/deletion signal."""
+        if self.event_datetime is None:
+            return "tbd"
+        event_dt = self.event_datetime
+        if event_dt.tzinfo is None:
+            event_dt = event_dt.replace(tzinfo=timezone.utc)
+        return "past" if event_dt < datetime.now(timezone.utc) else "upcoming"
+
 
 class EventFAQ(Base):
     __tablename__ = "event_faqs"

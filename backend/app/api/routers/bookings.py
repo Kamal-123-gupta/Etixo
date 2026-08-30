@@ -27,6 +27,9 @@ def create_booking(
     if event is None:
         raise HTTPException(status_code=404, detail="Event not found")
 
+    if event.status == "past":
+        raise HTTPException(status_code=400, detail="This event has already happened and can no longer be booked")
+
     remaining = event.total_tickets - event.tickets_sold
     if remaining < payload.quantity:
         raise HTTPException(status_code=400, detail=f"Only {remaining} tickets remaining")
@@ -131,5 +134,7 @@ def create_price_lock(
     event = db.get(Event, event_id)
     if event is None:
         raise HTTPException(status_code=404, detail="Event not found")
+    if event.status == "past":
+        raise HTTPException(status_code=400, detail="This event has already happened and can no longer be booked")
     expires_at = lock_price(event_id, current_user.id, event.current_price)
     return {"event_id": event_id, "locked_price": event.current_price, "expires_at": expires_at}

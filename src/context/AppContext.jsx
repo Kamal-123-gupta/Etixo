@@ -12,6 +12,7 @@ import {
   createEvent,
   logoutUser,
   adaptEventCore,
+  fetchEventById,
 
 } from '../lib/api';
 
@@ -153,13 +154,44 @@ export const AppContextProvider = ({ children }) => {
           // Fetch user's bookings from backend if logged in
           const token = localStorage.getItem('token');
           if (token && userProfile && !userProfile.isGuest) {
-            fetchMyBookings().then(myBks => {
+            fetchMyBookings().then(async (myBks) => {
               if (cancelled) return;
+
+              // GET /events now defaults to upcoming-only (past events
+              // aren't deleted, just excluded from the general listing --
+              // see Event.status on the backend), so a booking for an
+              // event that has already happened will very often NOT be in
+              // `data`. Without this fallback, every past booking's title
+              // silently degraded to "Event #123" instead of showing what
+              // the person actually bought a ticket to -- exactly the
+              // booking-history case that not deleting past events was
+              // supposed to preserve. Fetch any missing ones directly by
+              // id, same fallback pattern used for search/recommendations.
+              const knownIds = new Set(data.map((e) => e.id));
+              const missingIds = [
+                ...new Set(
+                  myBks
+                    .map((b) => String(b.event_id))
+                    .filter((id) => !knownIds.has(id))
+                ),
+              ];
+              const fetchedEvents = {};
+              if (missingIds.length > 0) {
+                const fetched = await Promise.all(
+                  missingIds.map((id) => fetchEventById(id).catch(() => null))
+                );
+                missingIds.forEach((id, i) => {
+                  if (fetched[i]) fetchedEvents[id] = fetched[i];
+                });
+              }
+              if (cancelled) return;
+
               const adaptedBks = myBks.map(b => {
-                const evt = data.find(e => String(e.id) === String(b.event_id));
+                const eventId = String(b.event_id);
+                const evt = data.find(e => e.id === eventId) || fetchedEvents[eventId];
                 return {
                   id: String(b.id),
-                  eventId: String(b.event_id),
+                  eventId,
                   eventTitle: evt ? evt.title : `Event #${b.event_id}`,
                   quantity: b.quantity,
                   pricePaid: b.price_paid,

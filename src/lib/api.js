@@ -112,6 +112,7 @@ export function adaptEventCore(apiEvent) {
     image: apiEvent.image_url || FALLBACK_IMAGE,
     performer: apiEvent.primary_performer_name || null,
     organizerId: apiEvent.organizer_id ?? null,
+    status: apiEvent.status, // "upcoming" | "past" | "tbd" -- computed server-side, see Event.status
   };
 }
 

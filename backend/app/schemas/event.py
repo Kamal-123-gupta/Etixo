@@ -41,6 +41,7 @@ class EventOut(BaseModel):
     popularity_score: float | None = None
     primary_performer_name: str | None = None
     organizer_id: int | None = None
+    status: str  # "upcoming" | "past" | "tbd" -- see Event.status for how this is computed
 
 
 class EventFAQOut(BaseModel):
