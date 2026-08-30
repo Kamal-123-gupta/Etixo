@@ -13,6 +13,8 @@ import {
   logoutUser,
   adaptEventCore,
   fetchEventById,
+  sendSupportMessageApi,
+  fetchMySupportMessages,
 
 } from '../lib/api';
 
@@ -89,14 +91,18 @@ export const AppContextProvider = ({ children }) => {
   // not from client-only mock state.
   const [notifications, setNotifications] = useState(initialNotifications);
   
-  // Chat History with initial Welcome Message from Support Agent
-  const [supportChat, setSupportChat] = useState([
-    {
-      sender: 'bot',
-      message: 'Hello! I am your AI Support Agent. 🤖 I can assist you with ticket purchases, refunds, cancellations, and venue details. How can I help you today?',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
-  ]);
+  // Chat History with initial Welcome Message from Support Agent. Guests
+  // see this locally-only message and nothing else -- the real Support
+  // Agent (POST /support/messages) requires a logged-in user, since it's
+  // built around the user's actual bookings and has no anonymous path.
+  const SUPPORT_WELCOME_MESSAGE = {
+    sender: 'bot',
+    message: 'Hello! I am your AI Support Agent. 🤖 I can assist you with ticket purchases, refunds, cancellations, and venue details. How can I help you today?',
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  };
+  const [supportChat, setSupportChat] = useState([SUPPORT_WELCOME_MESSAGE]);
+  const [supportChatLoading, setSupportChatLoading] = useState(false);
+  const [isSupportSending, setIsSupportSending] = useState(false);
 
   // Load User Profile from backend
   const loadProfile = async () => {
@@ -216,6 +222,47 @@ export const AppContextProvider = ({ children }) => {
       });
     return () => { cancelled = true; };
   }, [userProfile?.id]);
+
+  // Load real support chat history (GET /support/messages/me) for logged-in
+  // users. Backend messages don't carry an `intent` field on reload (only
+  // the live POST /support/messages response does -- intent isn't a
+  // persisted column, see SupportMessage model), so history entries won't
+  // show the LLM/rule-based badge that freshly-sent replies do -- only
+  // whether each message resolved via escalation.
+  useEffect(() => {
+    if (userProfile.isGuest || !userProfile.id) {
+      setSupportChat([SUPPORT_WELCOME_MESSAGE]);
+      return;
+    }
+    let cancelled = false;
+    setSupportChatLoading(true);
+    fetchMySupportMessages()
+      .then((rows) => {
+        if (cancelled) return;
+        if (rows.length === 0) {
+          setSupportChat([SUPPORT_WELCOME_MESSAGE]);
+          return;
+        }
+        setSupportChat(
+          rows.map((r) => ({
+            sender: r.sender === 'user' ? 'user' : 'bot',
+            message: r.message,
+            escalated: r.escalated,
+            timestamp: new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          }))
+        );
+      })
+      .catch((err) => {
+        console.error('Failed to load support history', err);
+        if (!cancelled) setSupportChat([SUPPORT_WELCOME_MESSAGE]);
+      })
+      .finally(() => {
+        if (!cancelled) setSupportChatLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userProfile?.id, userProfile?.isGuest]);
 
   // DISABLED: this used to randomly perturb prices client-side every 45s to
   // make the old mock-only prototype feel "alive". Now that events come
@@ -459,43 +506,47 @@ export const AppContextProvider = ({ children }) => {
     }));
   };
 
-  // Agent: Customer Support Agent Simulation Chatbot
-  const sendSupportMessage = (userMsg) => {
-    if (!userMsg.trim()) return;
+  // Agent: Customer Support Agent -- real backend (POST /support/messages),
+  // which runs rule-based intent matching first (refunds/QR/pricing/fraud/
+  // escalation keywords) and only falls through to a real LLM call for
+  // anything unmatched, with a template fallback if no LLM_PROVIDER is
+  // configured in the backend's .env. `intent` in the response is
+  // "llm_general" exactly when the reply actually came from the LLM --
+  // everything else (refund/qr/pricing_explanation/fraud_explanation/
+  // escalation/fallback) never touched it.
+  const sendSupportMessage = async (userMsg) => {
+    if (!userMsg.trim() || userProfile.isGuest) return;
 
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const userMessageObj = { sender: 'user', message: userMsg, timestamp };
-    
-    setSupportChat(prev => [...prev, userMessageObj]);
+    setSupportChat(prev => [...prev, { sender: 'user', message: userMsg, timestamp }]);
+    setIsSupportSending(true);
 
-    setTimeout(() => {
-      let botResponse = '';
-      const text = userMsg.toLowerCase();
-
-      if (text.includes('refund') || text.includes('cancel')) {
-        botResponse = 'Our Policy Agent permits full refunds if canceled at least 48 hours before the event. To proceed, go to the Admin portal or type "escalate" to transfer to a human refunds clerk. 💸';
-      } else if (text.includes('ticket') || text.includes('booking') || text.includes('qr')) {
-        botResponse = 'Once a booking is successful, tickets are automatically emailed. The Operations Agent activates unique, secure QR codes. You can also view them in your Profile. 🎟️';
-      } else if (text.includes('dynamic') || text.includes('price') || text.includes('surge')) {
-        botResponse = 'Our Dynamic Pricing Agent monitors real-time sales velocity. Prices increase during periods of high demand to match inventory curves, and drop when sales slow down. 📈';
-      } else if (text.includes('fraud') || text.includes('bot') || text.includes('blocked')) {
-        botResponse = 'The Fraud Detection Agent blocks bots and suspicious card activities in real-time. If your transaction was blocked falsely, please request manual review via human escalation.';
-      } else if (text.includes('escalate') || text.includes('human') || text.includes('operator') || text.includes('agent')) {
-        botResponse = 'Understood. Transferring your ticket thread to our Level-2 Support Supervisor... 🚨 Connected to Agent Sarah. How can I help you?';
-        setSupportChat(prev => [
-          ...prev,
-          { sender: 'bot', message: botResponse, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), escalated: true }
-        ]);
-        return;
-      } else {
-        botResponse = 'I can help explain any of the 9 backend AI agents (like Dynamic Pricing, Fraud Detection, Personalization, or Operations) or assist with ticket bookings. What would you like to know? 🤖';
-      }
-
+    try {
+      const result = await sendSupportMessageApi(userMsg);
       setSupportChat(prev => [
         ...prev,
-        { sender: 'bot', message: botResponse, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+        {
+          sender: 'bot',
+          message: result.reply,
+          escalated: result.escalated,
+          intent: result.intent,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
       ]);
-    }, 1000);
+    } catch (err) {
+      console.error('Support message failed', err);
+      setSupportChat(prev => [
+        ...prev,
+        {
+          sender: 'bot',
+          message: "Sorry, I couldn't reach support right now. Please try again in a moment.",
+          isError: true,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ]);
+    } finally {
+      setIsSupportSending(false);
+    }
   };
 
   const addCustomEvent = async (eventData) => {
@@ -571,6 +622,8 @@ export const AppContextProvider = ({ children }) => {
         fraudLogs,
         notifications,
         supportChat,
+        supportChatLoading,
+        isSupportSending,
         createBooking,
         sendSupportMessage,
         addCustomEvent,

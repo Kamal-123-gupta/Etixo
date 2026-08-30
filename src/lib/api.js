@@ -219,6 +219,27 @@ export async function fetchMyBookings() {
   return apiFetch("/bookings/me");
 }
 
+/**
+ * Customer Support Agent. Requires a logged-in user (no anonymous support
+ * path server-side, since it's built around the user's actual bookings).
+ * The backend runs rule-based intent matching first (refunds/QR/pricing/
+ * fraud/escalation) and only falls through to a real LLM call -- with a
+ * template fallback if no LLM_PROVIDER is configured -- for anything that
+ * doesn't match a known intent. `intent` in the response tells you which
+ * path actually produced the reply ("llm_general" means it went to the
+ * LLM; anything else was rule-based and never touched it).
+ */
+export async function sendSupportMessageApi(message) {
+  return apiFetch("/support/messages", {
+    method: "POST",
+    body: JSON.stringify({ message }),
+  });
+}
+
+export async function fetchMySupportMessages() {
+  return apiFetch("/support/messages/me");
+}
+
 export async function postCreateBooking({ event_id, quantity, cardholder_name, card_number }) {
   return apiFetch("/bookings", {
     method: "POST",
