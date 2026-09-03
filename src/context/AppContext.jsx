@@ -15,8 +15,8 @@ import {
   fetchEventById,
   sendSupportMessageApi,
   fetchMySupportMessages,
-
 } from '../lib/api';
+import { CURRENCIES, formatCurrencyPrice, detectCurrencyFromCountry } from '../lib/currency';
 
 export const AppContext = createContext();
 
@@ -46,7 +46,7 @@ const initialFraudLogs = [
 const initialNotifications = [
   {
     id: 'notif-1',
-    message: 'Dynamic Pricing Agent: Price for Neon Pulse increased by $5 due to high demand velocity.',
+    message: 'Dynamic Pricing Agent: Price for Neon Pulse increased due to high demand velocity.',
     type: 'pricing',
     timestamp: '10 mins ago',
     unread: true
@@ -68,6 +68,44 @@ const initialNotifications = [
 ];
 
 export const AppContextProvider = ({ children }) => {
+  // Theme state: 'light' by default, or read from localStorage
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('etixo_theme') || 'light';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('etixo_theme', theme);
+    if (theme === 'light') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+      document.body.classList.remove('dark');
+      document.body.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+      document.documentElement.classList.add('dark');
+      document.body.classList.remove('light');
+      document.body.classList.add('dark');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  // Currency State
+  const [currency, setCurrencyState] = useState(() => {
+    return localStorage.getItem('etixo_currency') || 'USD';
+  });
+
+  const setCurrency = (curr) => {
+    localStorage.setItem('etixo_currency', curr);
+    setCurrencyState(curr);
+  };
+
+  const formatPrice = (usdAmount) => {
+    return formatCurrencyPrice(usdAmount, currency);
+  };
+
   const [events, setEvents] = useState([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [eventsError, setEventsError] = useState(null);
@@ -86,18 +124,12 @@ export const AppContextProvider = ({ children }) => {
   const [authLoading, setAuthLoading] = useState(true);
 
   const [fraudLogs, setFraudLogs] = useState(initialFraudLogs);
-  // marketingCampaigns state removed -- Marketing Hub now sources its
-  // campaign list live from the real backend (see OrganizerConsole.jsx),
-  // not from client-only mock state.
   const [notifications, setNotifications] = useState(initialNotifications);
   
-  // Chat History with initial Welcome Message from Support Agent. Guests
-  // see this locally-only message and nothing else -- the real Support
-  // Agent (POST /support/messages) requires a logged-in user, since it's
-  // built around the user's actual bookings and has no anonymous path.
+  // Chat History with initial Welcome Message from Etix Support Agent.
   const SUPPORT_WELCOME_MESSAGE = {
     sender: 'bot',
-    message: 'Hello! I am your AI Support Agent. 🤖 I can assist you with ticket purchases, refunds, cancellations, and venue details. How can I help you today?',
+    message: 'Hello! I am Etix, your AI Support Assistant. 🤖 I can assist you with ticket purchases, refunds, cancellations, and venue details. How can I help you today?',
     timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   };
   const [supportChat, setSupportChat] = useState([SUPPORT_WELCOME_MESSAGE]);
@@ -120,17 +152,24 @@ export const AppContextProvider = ({ children }) => {
         console.error("Could not fetch user preferences", e);
       }
       
+      const locationStr = user.home_city || 'Arlington';
       setUserProfile({
         id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
-        location: user.home_city || 'Arlington',
+        location: locationStr,
         preferences: prefs.categories || [],
         budget: prefs.budget_max || 200,
         ticketTier: prefs.ticket_tier || 'Gold',
         isGuest: false
       });
+
+      // Auto-detect currency based on user country / location if not manually set
+      if (!localStorage.getItem('etixo_currency')) {
+        const detected = detectCurrencyFromCountry(user.home_country || user.home_city || locationStr);
+        setCurrencyState(detected);
+      }
     } catch (err) {
       console.error("Failed to load user profile on startup", err);
       logoutUser();
@@ -614,6 +653,12 @@ export const AppContextProvider = ({ children }) => {
   return (
     <AppContext.Provider
       value={{
+        theme,
+        toggleTheme,
+        currency,
+        setCurrency,
+        formatPrice,
+        CURRENCIES,
         events,
         eventsLoading,
         eventsError,

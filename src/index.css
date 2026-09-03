@@ -6,26 +6,55 @@
   --font-mono: "JetBrains Mono", monospace;
 }
 
-body {
-  font-family: var(--font-sans);
-  background-color: #16171d;
-  color: #e2e8f0;
-  margin: 0;
-  overflow-x: hidden;
+:root {
+  --bg-page: #16171d;
+  --bg-surface: #1f2028;
+  --bg-card-subtle: #16171d;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --border-subtle: rgba(255, 255, 255, 0.07);
 }
 
-/* Premium Custom Scrollbars */
+.light {
+  --bg-page: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-card-subtle: #f1f5f9;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  margin: 0;
+  overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Light mode specific element adjustments */
+.light body {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #16171d;
+  background: var(--bg-page);
 }
 ::-webkit-scrollbar-thumb {
   background: #2e303a;
   border-radius: 9999px;
-  border: 2px solid #16171d;
+  border: 2px solid var(--bg-page);
+}
+.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border: 2px solid #f8fafc;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #a855f7;
@@ -33,7 +62,7 @@ body {
 
 /* Micro-animations and transitions */
 .animate-fadeIn {
-  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fadeIn {

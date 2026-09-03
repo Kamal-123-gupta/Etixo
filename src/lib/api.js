@@ -33,11 +33,25 @@ async function apiFetch(path, options = {}) {
     let detail = res.statusText;
     try {
       const body = await res.json();
-      detail = body.detail || JSON.stringify(body);
+      if (Array.isArray(body.detail)) {
+        detail = body.detail
+          .map((d) => {
+            const field = d.loc ? d.loc.filter((x) => x !== "body").join(".") : "";
+            const msg = d.msg || "Invalid value";
+            return field ? `${field}: ${msg}` : msg;
+          })
+          .join(", ");
+      } else if (typeof body.detail === "string") {
+        detail = body.detail;
+      } else if (typeof body.message === "string") {
+        detail = body.message;
+      } else if (body) {
+        detail = JSON.stringify(body);
+      }
     } catch {
       // response wasn't JSON -- fall back to statusText
     }
-    throw new ApiError(`${res.status} ${detail}`, res.status);
+    throw new ApiError(detail, res.status);
   }
   if (res.status === 204) return null;
   return res.json();
@@ -86,8 +100,7 @@ function splitDateTime(isoString) {
   return { date, time };
 }
 
-const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&auto=format&fit=crop&q=60";
+import { getCategoryFallbackImage } from "./eventImages";
 
 /** Shared mapping for fields present on EventOut (both list and detail responses). */
 export function adaptEventCore(apiEvent) {
@@ -109,7 +122,7 @@ export function adaptEventCore(apiEvent) {
     // riskFactor has no backend equivalent yet (no fraud-risk field on
     // EventOut) -- defaulting rather than inventing a fake signal.
     riskFactor: "Low",
-    image: apiEvent.image_url || FALLBACK_IMAGE,
+    image: apiEvent.image_url || getCategoryFallbackImage(apiEvent.category),
     performer: apiEvent.primary_performer_name || null,
     organizerId: apiEvent.organizer_id ?? null,
     status: apiEvent.status, // "upcoming" | "past" | "tbd" -- computed server-side, see Event.status

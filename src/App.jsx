@@ -60,17 +60,25 @@ function AppRoutes() {
   );
 }
 
+function AppContent() {
+  const { theme } = useContext(AppContext);
+
+  return (
+    <Router>
+      <div className={`min-h-screen ${theme === 'light' ? 'bg-[#f8fafc] text-slate-800' : 'bg-[#16171d] text-gray-200'} flex flex-col font-sans selection:bg-purple-500/30 selection:text-purple-900 transition-colors duration-200`}>
+        <Navbar />
+        <main className="flex-1 flex flex-col">
+          <AppRoutes />
+        </main>
+      </div>
+    </Router>
+  );
+}
+
 function App() {
   return (
     <AppContextProvider>
-      <Router>
-        <div className="min-h-screen bg-[#16171d] text-gray-200 flex flex-col font-sans selection:bg-purple-500/30 selection:text-white">
-          <Navbar />
-          <main className="flex-1 flex flex-col">
-            <AppRoutes />
-          </main>
-        </div>
-      </Router>
+      <AppContent />
     </AppContextProvider>
   );
 }
