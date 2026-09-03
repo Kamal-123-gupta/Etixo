@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { User, Mail, MapPin, Sliders, DollarSign, Award, LogOut, Ticket, QrCode, Sparkles, Check, AlertTriangle, ShieldCheck } from 'lucide-react';
 
-const AVAILABLE_PREFS = ['football', 'basketball', 'baseball', 'hockey', 'stadium_tours'];
+const AVAILABLE_PREFS = ['football', 'basketball', 'baseball', 'hockey', 'stadium_tours', 'Music', 'Arts', 'Comedy', 'Tech', 'Food'];
 
 export default function Profile() {
   const {

@@ -53,11 +53,11 @@ export default function OrganizerConsole() {
   const [newTitle, setNewTitle] = useState('');
 
   const KNOWN_SPORT_CATEGORIES = ['football', 'basketball', 'baseball', 'hockey', 'stadium_tours'];
-  const FIXED_CATEGORY_GROUPS = ['Sports', 'Music', 'Arts', 'Comedy', 'Other'];
+  const FIXED_CATEGORY_GROUPS = ['Sports', 'Music', 'Arts', 'Comedy', 'Tech', 'Food', 'Other'];
   const realSportTypes = useMemo(() => {
-    return [...new Set(events.map((evt) => evt.category))]
-      .filter((cat) => cat && KNOWN_SPORT_CATEGORIES.includes(cat))
-      .sort();
+    const existing = [...new Set(events.map((evt) => evt.category))]
+      .filter((cat) => cat && KNOWN_SPORT_CATEGORIES.includes(cat));
+    return existing.length > 0 ? existing.sort() : KNOWN_SPORT_CATEGORIES;
   }, [events]);
   const extraCategoryGroups = useMemo(() => {
     return [...new Set(events.map((evt) => evt.category))]
@@ -65,7 +65,7 @@ export default function OrganizerConsole() {
       .sort();
   }, [events]);
   const CATEGORY_GROUPS = useMemo(() => {
-    return ['Sports', 'Music', 'Arts', 'Comedy', ...extraCategoryGroups, 'Other'];
+    return ['Sports', 'Music', 'Arts', 'Comedy', 'Tech', 'Food', ...extraCategoryGroups, 'Other'];
   }, [extraCategoryGroups]);
   const [newCategoryGroup, setNewCategoryGroup] = useState('Sports');
   const [newSportType, setNewSportType] = useState('');

@@ -5,7 +5,11 @@
 // with zero external network dependency, vibrant themes, and rich aesthetics.
 
 function createSvgDataUri(svgContent) {
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent.trim())}`;
+  // Defensive sanitizer: ensure all '&' characters are XML-safe entities (&amp;)
+  const sanitized = svgContent
+    .trim()
+    .replace(/&(?!(amp|lt|gt|quot|apos|#\d+|#x[a-f\d]+);)/gi, '&amp;');
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(sanitized)}`;
 }
 
 const CATEGORY_SVGS = {
@@ -82,7 +86,7 @@ const CATEGORY_SVGS = {
         <ellipse cx="40" cy="40" rx="14" ry="8" fill="none" stroke="#ffffff" stroke-width="1.5" />
       </g>
       <text x="400" y="210" fill="#faf5ff" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="4" text-anchor="middle">STADIUM EXPERIENCE</text>
-      <text x="400" y="240" fill="#d8b4fe" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">VIP ARENA & ACCESS PASS</text>
+      <text x="400" y="240" fill="#d8b4fe" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">VIP ARENA &amp; ACCESS PASS</text>
     </svg>
   `),
 
@@ -161,7 +165,7 @@ const CATEGORY_SVGS = {
         <ellipse cx="40" cy="40" rx="24" ry="12" fill="#0f172a" stroke="#ffffff" stroke-width="2" />
       </g>
       <text x="400" y="210" fill="#f0f9ff" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="4" text-anchor="middle">ICE HOCKEY NIGHT</text>
-      <text x="400" y="240" fill="#7dd3fc" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">RINK SHOWDOWN & TOURNAMENT</text>
+      <text x="400" y="240" fill="#7dd3fc" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">RINK SHOWDOWN &amp; TOURNAMENT</text>
     </svg>
   `),
 
@@ -206,7 +210,7 @@ const CATEGORY_SVGS = {
         <path d="M 32 50 A 6 6 0 1 1 26 44 L 26 24 L 54 18 L 54 44 A 6 6 0 1 1 48 38 L 48 24 L 32 28 Z" fill="#ffffff" />
       </g>
       <text x="400" y="200" fill="#fdf4ff" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="4" text-anchor="middle">LIVE MUSIC FESTIVAL</text>
-      <text x="400" y="230" fill="#f472b6" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">CONCERT & STAGE SHOW</text>
+      <text x="400" y="230" fill="#f472b6" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">CONCERT &amp; STAGE SHOW</text>
     </svg>
   `),
 
@@ -242,8 +246,8 @@ const CATEGORY_SVGS = {
         <rect x="0" y="0" width="80" height="80" rx="20" fill="#0e7490" fill-opacity="0.6" stroke="#22d3ee" stroke-width="2" />
         <path d="M 28 32 L 20 40 L 28 48 M 52 32 L 60 40 L 52 48 M 44 26 L 36 54" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none" />
       </g>
-      <text x="400" y="200" fill="#f0fdf4" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="4" text-anchor="middle">TECH SUMMIT & KEYNOTE</text>
-      <text x="400" y="230" fill="#38bdf8" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">INNOVATION & AI SESSIONS</text>
+      <text x="400" y="200" fill="#f0fdf4" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="4" text-anchor="middle">TECH SUMMIT &amp; KEYNOTE</text>
+      <text x="400" y="230" fill="#38bdf8" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">INNOVATION &amp; AI SESSIONS</text>
     </svg>
   `),
 
@@ -300,8 +304,8 @@ const CATEGORY_SVGS = {
         <ellipse cx="46" cy="36" rx="3" ry="4" fill="#881337" />
         <path d="M 34 48 Q 40 54 46 48" stroke="#881337" stroke-width="2" fill="none" />
       </g>
-      <text x="400" y="200" fill="#fff1f2" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="4" text-anchor="middle">THEATRE & ARTS</text>
-      <text x="400" y="230" fill="#fda4af" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">DRAMA, EXHIBITS & PERFORMANCE</text>
+      <text x="400" y="200" fill="#fff1f2" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="4" text-anchor="middle">THEATRE &amp; ARTS</text>
+      <text x="400" y="230" fill="#fda4af" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">DRAMA, EXHIBITS &amp; PERFORMANCE</text>
     </svg>
   `),
 
@@ -324,8 +328,8 @@ const CATEGORY_SVGS = {
         <ellipse cx="48" cy="30" rx="6" ry="8" fill="#ffffff" />
         <line x1="48" y1="38" x2="48" y2="56" stroke="#ffffff" stroke-width="2" />
       </g>
-      <text x="400" y="200" fill="#fff7ed" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="4" text-anchor="middle">FOOD & CULINARY FEST</text>
-      <text x="400" y="230" fill="#fdba74" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">TASTING & CHEF WORKSHOPS</text>
+      <text x="400" y="200" fill="#fff7ed" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="4" text-anchor="middle">FOOD &amp; CULINARY FEST</text>
+      <text x="400" y="230" fill="#fdba74" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">TASTING &amp; CHEF WORKSHOPS</text>
     </svg>
   `),
 
@@ -367,10 +371,16 @@ CATEGORY_SVGS.concert = CATEGORY_SVGS.music;
 CATEGORY_SVGS.festival = CATEGORY_SVGS.music;
 CATEGORY_SVGS.conference = CATEGORY_SVGS.tech;
 CATEGORY_SVGS.hackathon = CATEGORY_SVGS.tech;
+CATEGORY_SVGS.technology = CATEGORY_SVGS.tech;
+CATEGORY_SVGS.coding = CATEGORY_SVGS.tech;
+CATEGORY_SVGS.ai = CATEGORY_SVGS.tech;
 CATEGORY_SVGS.standup = CATEGORY_SVGS.comedy;
 CATEGORY_SVGS.theatre = CATEGORY_SVGS.arts;
 CATEGORY_SVGS.theater = CATEGORY_SVGS.arts;
+CATEGORY_SVGS.art = CATEGORY_SVGS.arts;
 CATEGORY_SVGS.drinks = CATEGORY_SVGS.food;
+CATEGORY_SVGS.dining = CATEGORY_SVGS.food;
+CATEGORY_SVGS.culinary = CATEGORY_SVGS.food;
 
 /**
  * Returns an instant, self-contained SVG Data URI visual for the given category.
