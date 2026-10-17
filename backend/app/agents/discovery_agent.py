@@ -61,6 +61,24 @@ class EventDiscoveryAgent:
         self.categories = sorted(events["category"].dropna().unique().tolist())
         self.cities = sorted(events["venue_city"].dropna().unique().tolist())
         self.states = sorted(events["venue_state"].dropna().unique().tolist())
+        self._init_semantic_index()
+
+    def _init_semantic_index(self):
+        """Build TF-IDF semantic vector space over event corpus for hybrid retrieval."""
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        names = self.events.get("name", pd.Series([""] * len(self.events))).fillna("")
+        cats = self.events.get("category", pd.Series([""] * len(self.events))).fillna("")
+        performers = self.events.get("primary_performer_name", pd.Series([""] * len(self.events))).fillna("")
+        cities = self.events.get("venue_city", pd.Series([""] * len(self.events))).fillna("")
+        venues = self.events.get("venue_name", pd.Series([""] * len(self.events))).fillna("")
+
+        corpus = (names + " " + cats + " " + performers + " " + cities + " " + venues).tolist()
+        self.tfidf_vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words="english", max_features=5000)
+        if len(corpus) > 0 and any(len(text.strip()) > 0 for text in corpus):
+            self.tfidf_matrix = self.tfidf_vectorizer.fit_transform(corpus)
+        else:
+            self.tfidf_matrix = None
+
 
     # ------------------------------------------------------------------ #
     # Stage 1: intent parsing
@@ -160,7 +178,21 @@ class EventDiscoveryAgent:
                 candidates["name"].str.contains(intent.keywords, case=False, na=False)
                 | candidates["primary_performer_name"].str.contains(intent.keywords, case=False, na=False)
             )
-            candidates = candidates[mask]
+            if mask.any():
+                candidates = candidates[mask]
+            elif self.tfidf_matrix is not None:
+                # Semantic vector search fallback for natural language conceptual queries
+                query_vec = self.tfidf_vectorizer.transform([intent.keywords])
+                cand_idx = candidates.index.to_numpy()
+                cand_tfidf = self.tfidf_matrix[cand_idx]
+                sims = (cand_tfidf @ query_vec.T).toarray().ravel()
+                pos = sims > 0.05
+                if pos.any():
+                    candidates = candidates.iloc[pos].copy()
+                    candidates["semantic_similarity"] = sims[pos]
+                else:
+                    candidates = candidates[mask]
+
 
         if candidates.empty:
             return candidates

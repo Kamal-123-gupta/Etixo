@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { User, Mail, Lock, Globe, MapPin, UserPlus, AlertCircle } from 'lucide-react';
+import BrandLogo from '../components/BrandLogo';
 
 export default function Signup() {
   const { signup, login, theme } = useContext(AppContext);
@@ -71,9 +72,7 @@ export default function Signup() {
       }`}>
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-purple-700 flex items-center justify-center shadow-lg shadow-purple-500/20 mx-auto text-white font-extrabold text-xl font-mono">
-            E
-          </div>
+          <BrandLogo size={48} className="mx-auto shadow-lg" />
           <h2 className={`text-2xl font-extrabold tracking-tight ${
             isLight ? 'text-slate-900' : 'text-white'
           }`}>Join Etixo</h2>

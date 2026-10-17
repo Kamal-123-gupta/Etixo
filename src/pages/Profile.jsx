@@ -3,7 +3,18 @@ import { useNavigate, Link } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import { User, Mail, MapPin, Sliders, DollarSign, Award, LogOut, Ticket, QrCode, Sparkles, Check, AlertTriangle, ShieldCheck } from 'lucide-react';
 
-const AVAILABLE_PREFS = ['football', 'basketball', 'baseball', 'hockey', 'stadium_tours', 'Music', 'Arts', 'Comedy', 'Tech', 'Food'];
+const AVAILABLE_PREFS = [
+  // Sports
+  'football', 'basketball', 'baseball', 'hockey', 'stadium_tours',
+  // Entertainment
+  'Music', 'Arts', 'Comedy', 'Film',
+  // Tech & Learning
+  'Tech', 'Hackathon', 'Conference',
+  // Lifestyle
+  'Food', 'Fitness', 'Wellness', 'Dance',
+  // Community
+  'Gaming', 'Charity', 'Networking', 'Kids',
+];
 
 export default function Profile() {
   const {
@@ -350,14 +361,17 @@ export default function Profile() {
             </div>
 
             {/* Generated QR Code Container */}
-            <div className="w-52 h-52 bg-white rounded-3xl mx-auto flex items-center justify-center p-4 shadow-lg shadow-purple-500/10 border border-slate-100">
-              <div className="w-full h-full flex flex-col items-center justify-center border-4 border-dashed border-purple-600/20 rounded-2xl relative overflow-hidden">
-                <QrCode className="w-24 h-24 text-gray-800" />
-                <span className="text-[8px] text-gray-500 font-mono mt-1 font-semibold break-all text-center px-2">
-                  {selectedBookingQr.qrCode}
-                </span>
-              </div>
+            <div className="w-56 h-56 bg-white rounded-3xl mx-auto flex flex-col items-center justify-center p-3 shadow-lg shadow-purple-500/10 border border-slate-100">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(selectedBookingQr.qrCode)}`}
+                alt="Ticket QR Code"
+                className="w-44 h-44 object-contain rounded-xl"
+              />
+              <span className="text-[8px] text-gray-500 font-mono mt-1 font-semibold break-all text-center px-1">
+                {selectedBookingQr.qrCode}
+              </span>
             </div>
+
 
             <div className={`p-4 rounded-2xl border space-y-1 text-xs leading-normal text-left ${
               isLight ? 'bg-purple-50/60 border-purple-100 text-purple-900' : 'bg-[#16171d] border-white/5 text-gray-400'

@@ -145,14 +145,11 @@ function adaptEventDetail(apiEvent) {
 
 // --- Public API -------------------------------------------------------------
 
-export async function fetchEvents() {
-  // Backend defaults to limit=20 per page (max allowed: 100 -- see
-  // GET /events's `limit: int = Query(default=20, le=100)`). Requesting
-  // the max here reduces how often search results fall outside the loaded
-  // page (see fetchEventById fallback in AttendeePortal), but does NOT
-  // fully solve it for catalogs over 100 events -- real pagination/
-  // infinite-scroll in the UI is still a follow-up, not built here.
-  const data = await apiFetch("/events?limit=100");
+export async function fetchEvents(params = {}) {
+  const query = new URLSearchParams();
+  query.set("limit", String(params.limit || 500));
+  if (params.category) query.set("category", params.category);
+  const data = await apiFetch(`/events?${query.toString()}`);
   return adaptEventList(data);
 }
 
@@ -337,3 +334,19 @@ export async function launchCampaignApi(eventId, channel) {
 export async function fetchEventCampaigns(eventId) {
   return apiFetch(`/organizer/events/${eventId}/campaigns`);
 }
+
+export async function fetchAdminStats() {
+  return apiFetch("/admin/stats");
+}
+
+export async function fetchAdminFraudLogs() {
+  return apiFetch("/admin/fraud-logs");
+}
+
+export async function checkInTicketApi(eventId, qrToken) {
+  return apiFetch(`/organizer/events/${eventId}/check-in`, {
+    method: "POST",
+    body: JSON.stringify({ qr_token: qrToken }),
+  });
+}
+

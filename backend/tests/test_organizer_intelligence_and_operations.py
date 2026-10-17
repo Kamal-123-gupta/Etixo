@@ -59,3 +59,24 @@ def test_operations_checklist_requires_ownership(client, organizer_headers, atte
     event_id = _create_event(client, organizer_headers)
     r = client.get(f"/organizer/events/{event_id}/operations", headers=attendee_headers)
     assert r.status_code == 403
+
+
+def test_operations_qr_ticket_check_in_success(client, organizer_headers, attendee_headers):
+    event_id = _create_event(client, organizer_headers)
+    # Book a ticket as attendee
+    bk = client.post("/bookings", headers=attendee_headers, json={"event_id": event_id, "quantity": 2}).json()
+    qr_token = bk["qr_code"]
+    assert qr_token.startswith("QR-")
+
+    # Organizer scans and verifies QR code at checkpoint
+    r = client.post(
+        f"/organizer/events/{event_id}/check-in",
+        headers=organizer_headers,
+        json={"qr_token": qr_token},
+    )
+    assert r.status_code == 200
+    res = r.json()
+    assert res["valid"] is True
+    assert res["status"] == "CHECKED_IN"
+    assert res["quantity"] == 2
+

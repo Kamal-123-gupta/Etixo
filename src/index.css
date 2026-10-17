@@ -1,27 +1,37 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Outfit", "Inter", sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-heading: "Inter Tight", "Inter", sans-serif;
+  --font-serif: "Instrument Serif", Georgia, serif;
   --font-mono: "JetBrains Mono", monospace;
+
+  /* Reference color tokens */
+  --color-warm-bg: #f6f4ee;
+  --color-warm-surface: #ffffff;
+  --color-warm-border: #e7e4dc;
+  --color-forest-teal: #133834;
+  --color-vibrant-pink: #ec3b77;
+  --color-soft-lavender: #9e98e4;
+  --color-rich-amber: #f59e0b;
 }
 
 :root {
-  --bg-page: #16171d;
-  --bg-surface: #1f2028;
-  --bg-card-subtle: #16171d;
-  --text-main: #f1f5f9;
-  --text-muted: #94a3b8;
-  --border-subtle: rgba(255, 255, 255, 0.07);
+  --bg-page: #101114;
+  --bg-surface: #18191e;
+  --bg-card-subtle: #121316;
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --border-subtle: rgba(255, 255, 255, 0.08);
 }
 
 .light {
-  --bg-page: #f8fafc;
+  --bg-page: #f6f4ee;
   --bg-surface: #ffffff;
-  --bg-card-subtle: #f1f5f9;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --border-subtle: rgba(0, 0, 0, 0.08);
+  --bg-card-subtle: #f0ede4;
+  --text-main: #111827;
+  --text-muted: #5f6676;
+  --border-subtle: #e7e4dc;
 }
 
 body {
@@ -31,33 +41,31 @@ body {
   margin: 0;
   overflow-x: hidden;
   transition: background-color 0.25s ease, color 0.25s ease;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Light mode specific element adjustments */
 .light body {
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: #f6f4ee;
+  color: #111827;
 }
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg-page);
 }
 ::-webkit-scrollbar-thumb {
-  background: #2e303a;
+  background: #333540;
   border-radius: 9999px;
-  border: 2px solid var(--bg-page);
 }
 .light ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border: 2px solid #f8fafc;
+  background: #dcd8ce;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #a855f7;
+  background: #ec3b77;
 }
 
 /* Micro-animations and transitions */
@@ -68,10 +76,142 @@ body {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+
+/* Dynamic Orb & Floating Badges Keyframes */
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.6deg);
+  }
+}
+
+@keyframes float-delayed {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(-0.6deg);
+  }
+}
+
+@keyframes float-reverse {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(8px) scale(1.02);
+  }
+}
+
+@keyframes orbit-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbit-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes scan-radar {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes globe-spin {
+  0% {
+    stroke-dashoffset: 0;
+    transform: rotateY(0deg);
+  }
+  100% {
+    stroke-dashoffset: 400;
+    transform: rotateY(360deg);
+  }
+}
+
+@keyframes holo-shimmer {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes wave-bar {
+  0%, 100% {
+    height: 4px;
+  }
+  50% {
+    height: 18px;
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 4.5s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 5.2s ease-in-out infinite 1s;
+}
+
+.animate-float-reverse {
+  animation: float-reverse 4.8s ease-in-out infinite 0.6s;
+}
+
+.animate-orbit-spin {
+  animation: orbit-spin 22s linear infinite;
+}
+
+.animate-orbit-reverse {
+  animation: orbit-reverse 28s linear infinite;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+.animate-scan-radar {
+  animation: scan-radar 7s linear infinite;
+}
+
+.animate-holo-shimmer {
+  animation: holo-shimmer 6s linear infinite;
+}
+

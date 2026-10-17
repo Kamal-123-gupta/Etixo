@@ -1,19 +1,67 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useMemo, useState, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import { ShieldAlert, Users, Database, DollarSign, AlertTriangle } from 'lucide-react';
+import { fetchAdminStats, fetchAdminFraudLogs } from '../lib/api';
 
 export default function AdminDashboard() {
-  const { events, fraudLogs, userProfile, formatPrice, theme } = useContext(AppContext);
+  const { events, fraudLogs: contextFraudLogs, userProfile, formatPrice, theme } = useContext(AppContext);
   const isLight = theme === 'light';
 
-  // Stats calculation
+  const [backendStats, setBackendStats] = useState(null);
+  const [liveFraudLogs, setLiveFraudLogs] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchAdminStats()
+      .then((st) => {
+        if (!cancelled) setBackendStats(st);
+      })
+      .catch(() => {});
+
+    fetchAdminFraudLogs()
+      .then((logs) => {
+        if (!cancelled && logs && logs.length > 0) {
+          setLiveFraudLogs(
+            logs.map((l) => ({
+              id: `api-fraud-${l.id}`,
+              timestamp: new Date(l.timestamp).toLocaleString(),
+              type: l.type || 'Anomalous Transaction',
+              severity: l.severity === 'high' ? 'High' : l.severity === 'medium' ? 'Medium' : 'Low',
+              ip: l.ip || '127.0.0.1',
+              user: `User #${l.event_id || 'N/A'}`,
+              eventTitle: `Event ID: ${l.event_id}`,
+              details: l.details || 'Blocked by Fraud Detection Agent.',
+            }))
+          );
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Merge live fraud logs with context logs
+  const displayFraudLogs = useMemo(() => {
+    if (liveFraudLogs.length > 0) return liveFraudLogs;
+    return contextFraudLogs;
+  }, [liveFraudLogs, contextFraudLogs]);
+
+  // Stats calculation (use real backend stats if available)
   const totalRevenue = useMemo(() => {
+    if (backendStats && backendStats.gross_revenue !== undefined) {
+      return backendStats.gross_revenue;
+    }
     return events.reduce((sum, e) => sum + (e.ticketsSold * e.price), 0);
-  }, [events]);
+  }, [events, backendStats]);
 
   const totalBookingsCount = useMemo(() => {
+    if (backendStats && backendStats.total_purchases !== undefined) {
+      return backendStats.total_purchases;
+    }
     return events.reduce((sum, e) => sum + e.ticketsSold, 0);
-  }, [events]);
+  }, [events, backendStats]);
 
   // Mock list of attendee preference clusters in the system
   const mockUserClusters = [
@@ -23,6 +71,7 @@ export default function AdminDashboard() {
     { name: 'Devon Miles', email: 'devon@flag.org', location: 'Bengaluru', interests: ['Tech', 'Music'], budget: 80, tier: 'Silver' },
     { name: 'Leslie Knope', email: 'lknope@pawnee.gov', location: 'Pune', interests: ['Comedy', 'Arts'], budget: 120, tier: 'Gold' }
   ];
+
 
   return (
     <div className={`flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full space-y-10 text-left transition-colors ${
@@ -81,7 +130,7 @@ export default function AdminDashboard() {
           </div>
           <div>
             <span className="text-[10px] text-slate-400 font-mono block uppercase font-bold">Fraud Agent Warnings</span>
-            <span className={`text-lg font-bold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>{fraudLogs.length} Alarms</span>
+            <span className={`text-lg font-bold font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>{displayFraudLogs.length} Alarms</span>
           </div>
         </div>
       </section>
@@ -108,12 +157,13 @@ export default function AdminDashboard() {
           </div>
 
           <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
-            {fraudLogs.length === 0 ? (
+            {displayFraudLogs.length === 0 ? (
               <div className="text-center py-20 text-xs text-slate-400">
                 No fraud incidents logged yet. Secure bookings active.
               </div>
             ) : (
-              fraudLogs.map((log) => (
+              displayFraudLogs.map((log) => (
+
                 <div key={log.id} className={`border p-4 rounded-xl space-y-2 text-xs ${
                   isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#16171d] border-white/5'
                 }`}>

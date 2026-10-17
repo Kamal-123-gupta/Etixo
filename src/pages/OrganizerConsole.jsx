@@ -1,14 +1,15 @@
 import React, { useContext, useState, useMemo, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
-import { generateEventContent, generateAndApplyEventContent, fetchOrganizerInsights, launchCampaignApi, fetchEventCampaigns } from '../lib/api';
+import { generateEventContent, generateAndApplyEventContent, fetchOrganizerInsights, launchCampaignApi, fetchEventCampaigns, checkInTicketApi } from '../lib/api';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import {
   TrendingUp, Sparkles, Megaphone, CheckSquare, PlusCircle,
-  DollarSign, Users, Award, ShieldCheck, PlayCircle
+  DollarSign, Users, Award, ShieldCheck, PlayCircle, QrCode
 } from 'lucide-react';
+
 
 export default function OrganizerConsole() {
   const { events, addCustomEvent, formatPrice, currency, theme } = useContext(AppContext);
@@ -53,7 +54,13 @@ export default function OrganizerConsole() {
   const [newTitle, setNewTitle] = useState('');
 
   const KNOWN_SPORT_CATEGORIES = ['football', 'basketball', 'baseball', 'hockey', 'stadium_tours'];
-  const FIXED_CATEGORY_GROUPS = ['Sports', 'Music', 'Arts', 'Comedy', 'Tech', 'Food', 'Other'];
+  const FIXED_CATEGORY_GROUPS = [
+    'Sports', 'Music', 'Arts', 'Comedy', 'Film',
+    'Tech', 'Hackathon', 'Conference',
+    'Food', 'Fitness', 'Wellness', 'Dance',
+    'Gaming', 'Charity', 'Networking', 'Kids',
+    'Other',
+  ];
   const realSportTypes = useMemo(() => {
     const existing = [...new Set(events.map((evt) => evt.category))]
       .filter((cat) => cat && KNOWN_SPORT_CATEGORIES.includes(cat));
@@ -284,6 +291,30 @@ export default function OrganizerConsole() {
       setIsLaunchingCampaign(false);
     }
   };
+
+  const [scanQrInput, setScanQrInput] = useState('');
+  const [scanResult, setScanResult] = useState(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanError, setScanError] = useState(null);
+
+  const handleScanTicket = async () => {
+    if (!scanQrInput.trim()) return;
+    setIsScanning(true);
+    setScanResult(null);
+    setScanError(null);
+    try {
+      const targetEventId = selectedMarketingEventId || (events[0]?.id);
+      if (!targetEventId) throw new Error('No event selected or available');
+      const res = await checkInTicketApi(targetEventId, scanQrInput.trim());
+      setScanResult(res);
+      setScanQrInput('');
+    } catch (err) {
+      setScanError(err.message || 'Verification failed: invalid token or event mismatch.');
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
 
   return (
     <div className={`flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full space-y-8 text-left transition-colors ${
@@ -988,9 +1019,64 @@ export default function OrganizerConsole() {
                 🤖 <span className="font-semibold text-purple-600">Operations Agent:</span> Smart QR scanners are operational. Dynamic check-in queue management enabled.
               </p>
             </div>
+
+            {/* Live QR Check-in Terminal */}
+            <div className={`border rounded-2xl p-5 space-y-3.5 transition-colors ${
+              isLight ? 'bg-white border-slate-200 shadow-xs' : 'bg-[#1f2028] border-white/5'
+            }`}>
+              <div className="flex items-center gap-2">
+                <QrCode className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <h4 className={`text-xs font-bold font-mono uppercase tracking-wider m-0 ${
+                  isLight ? 'text-slate-800' : 'text-gray-200'
+                }`}>
+                  Gate Check-In Scanner
+                </h4>
+              </div>
+
+              <p className="text-[11px] text-slate-400 leading-tight">
+                Simulate gate attendant scanning an attendee's QR ticket token at entrance.
+              </p>
+
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="Paste QR token (e.g. QR-1-...)"
+                  value={scanQrInput}
+                  onChange={(e) => setScanQrInput(e.target.value)}
+                  className={`w-full text-xs font-mono p-2.5 rounded-xl border transition-colors outline-hidden ${
+                    isLight ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-[#16171d] border-white/10 text-gray-200'
+                  }`}
+                />
+
+                <button
+                  onClick={handleScanTicket}
+                  disabled={isScanning || !scanQrInput.trim()}
+                  className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all"
+                >
+                  {isScanning ? 'Verifying...' : 'Verify & Check In'}
+                </button>
+              </div>
+
+              {scanResult && (
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[11px] text-emerald-600 dark:text-emerald-400 space-y-1">
+                  <div className="font-bold flex items-center gap-1">
+                    ✓ {scanResult.status}: Verified
+                  </div>
+                  <div>Admitted: {scanResult.quantity} attendee(s)</div>
+                  <div className="text-[10px] text-slate-400">Event: {scanResult.event_title}</div>
+                </div>
+              )}
+
+              {scanError && (
+                <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-[11px] text-rose-500 font-medium">
+                  ✕ {scanError}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
+
 
     </div>
   );

@@ -653,14 +653,21 @@ export default function EventDetails() {
                         <div className={`flex flex-col items-center pt-3 border-t border-dashed ${
                           isLight ? 'border-slate-200' : 'border-white/10'
                         }`}>
-                          <div className="w-28 h-28 bg-white p-2 rounded-lg flex items-center justify-center shadow-lg">
-                            <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center p-1.5 text-[8px] text-center text-white break-all">
-                              <span className="font-bold text-[7px] text-purple-400 mb-1">SMART PASS</span>
+                          <div className="w-32 h-32 bg-white p-2 rounded-xl flex flex-col items-center justify-center shadow-lg border border-slate-100">
+                            <img
+                              src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(bookingResult.booking.qrCode)}`}
+                              alt="Ticket QR Code"
+                              className="w-24 h-24 object-contain"
+                            />
+                            <span className="font-mono text-[8px] text-gray-500 font-bold truncate max-w-[110px] text-center mt-1">
                               {bookingResult.booking.qrCode}
-                            </div>
+                            </span>
                           </div>
-                          <span className="text-[8px] text-slate-400 mt-2">Check-in system initialized</span>
+                          <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-bold mt-2 flex items-center gap-1">
+                            ✓ Operations Agent Checkpoint Activated
+                          </span>
                         </div>
+
                       </div>
 
                       <button

@@ -333,6 +333,222 @@ const CATEGORY_SVGS = {
     </svg>
   `),
 
+  // Hackathon / Coding Sprint
+  hackathon: createSvgDataUri(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+      <defs>
+        <linearGradient id="bg-hack" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#020617" />
+          <stop offset="50%" stop-color="#0f172a" />
+          <stop offset="100%" stop-color="#14532d" />
+        </linearGradient>
+        <radialGradient id="glow-hack" cx="50%" cy="30%" r="55%">
+          <stop offset="0%" stop-color="#22c55e" stop-opacity="0.5" />
+          <stop offset="100%" stop-color="#020617" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="800" height="400" fill="url(#bg-hack)" />
+      <rect width="800" height="400" fill="url(#glow-hack)" />
+      <!-- Binary rain effect -->
+      <g fill="#22c55e" fill-opacity="0.2" font-family="monospace" font-size="14">
+        <text x="60" y="80">01101</text><text x="60" y="110">10010</text>
+        <text x="130" y="60">11001</text><text x="130" y="90">00110</text><text x="130" y="120">10101</text>
+        <text x="620" y="70">10110</text><text x="620" y="100">01001</text>
+        <text x="690" y="85">11010</text><text x="690" y="115">00101</text>
+        <text x="740" y="60">01100</text>
+      </g>
+      <!-- Timer / Clock decoration -->
+      <circle cx="160" cy="200" r="50" fill="none" stroke="#22c55e" stroke-width="2" stroke-opacity="0.3" />
+      <circle cx="640" cy="200" r="50" fill="none" stroke="#4ade80" stroke-width="2" stroke-opacity="0.3" />
+      <g transform="translate(360, 70)">
+        <rect x="0" y="0" width="80" height="80" rx="18" fill="#14532d" fill-opacity="0.8" stroke="#4ade80" stroke-width="2" />
+        <!-- Code brackets icon -->
+        <path d="M 28 30 L 18 40 L 28 50 M 52 30 L 62 40 L 52 50 M 46 24 L 34 56" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none" />
+      </g>
+      <text x="400" y="200" fill="#f0fdf4" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="4" text-anchor="middle">HACKATHON SPRINT</text>
+      <text x="400" y="230" fill="#4ade80" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">BUILD &amp; INNOVATE IN 24H</text>
+    </svg>
+  `),
+
+  // Fitness / Sports Events
+  fitness: createSvgDataUri(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+      <defs>
+        <linearGradient id="bg-fit" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#1a0533" />
+          <stop offset="50%" stop-color="#6d28d9" />
+          <stop offset="100%" stop-color="#0c4a6e" />
+        </linearGradient>
+        <radialGradient id="glow-fit" cx="50%" cy="30%" r="55%">
+          <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.5" />
+          <stop offset="100%" stop-color="#1a0533" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="800" height="400" fill="url(#bg-fit)" />
+      <rect width="800" height="400" fill="url(#glow-fit)" />
+      <!-- Heartbeat line -->
+      <polyline points="0,220 120,220 160,120 200,300 240,160 280,280 320,200 800,200" fill="none" stroke="#a78bfa" stroke-width="3" stroke-opacity="0.4" />
+      <g transform="translate(360, 70)">
+        <circle cx="40" cy="40" r="44" fill="#5b21b6" fill-opacity="0.8" stroke="#c4b5fd" stroke-width="2" />
+        <!-- Dumbbell icon -->
+        <rect x="14" y="36" width="52" height="8" rx="4" fill="#ffffff" />
+        <rect x="10" y="28" width="10" height="24" rx="4" fill="#ffffff" />
+        <rect x="60" y="28" width="10" height="24" rx="4" fill="#ffffff" />
+      </g>
+      <text x="400" y="200" fill="#faf5ff" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="4" text-anchor="middle">FITNESS &amp; SPORTS</text>
+      <text x="400" y="230" fill="#c4b5fd" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">TRAINING &amp; ENDURANCE EVENTS</text>
+    </svg>
+  `),
+
+  // Gaming / Esports
+  gaming: createSvgDataUri(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+      <defs>
+        <linearGradient id="bg-game" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#0f0a1e" />
+          <stop offset="50%" stop-color="#1e1b4b" />
+          <stop offset="100%" stop-color="#164e63" />
+        </linearGradient>
+        <radialGradient id="glow-game" cx="50%" cy="30%" r="55%">
+          <stop offset="0%" stop-color="#818cf8" stop-opacity="0.6" />
+          <stop offset="100%" stop-color="#0f0a1e" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="800" height="400" fill="url(#bg-game)" />
+      <rect width="800" height="400" fill="url(#glow-game)" />
+      <!-- Pixel grid decoration -->
+      <g fill="#818cf8" fill-opacity="0.15">
+        <rect x="80" y="80" width="16" height="16" /><rect x="112" y="80" width="16" height="16" /><rect x="96" y="96" width="16" height="16" />
+        <rect x="660" y="280" width="16" height="16" /><rect x="692" y="280" width="16" height="16" /><rect x="676" y="296" width="16" height="16" />
+        <rect x="660" y="80" width="16" height="16" /><rect x="692" y="96" width="16" height="16" />
+      </g>
+      <g transform="translate(360, 70)">
+        <rect x="0" y="0" width="80" height="80" rx="18" fill="#312e81" fill-opacity="0.9" stroke="#818cf8" stroke-width="2" />
+        <!-- Gamepad icon -->
+        <rect x="16" y="28" width="48" height="30" rx="10" fill="none" stroke="#ffffff" stroke-width="2.5" />
+        <line x1="26" y1="38" x2="26" y2="48" stroke="#ffffff" stroke-width="2.5" />
+        <line x1="21" y1="43" x2="31" y2="43" stroke="#ffffff" stroke-width="2.5" />
+        <circle cx="52" cy="40" r="3" fill="#c7d2fe" />
+        <circle cx="60" cy="44" r="3" fill="#c7d2fe" />
+      </g>
+      <text x="400" y="200" fill="#eef2ff" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="4" text-anchor="middle">GAMING &amp; ESPORTS</text>
+      <text x="400" y="230" fill="#818cf8" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">TOURNAMENTS &amp; LAN PARTIES</text>
+    </svg>
+  `),
+
+  // Dance / Performances
+  dance: createSvgDataUri(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+      <defs>
+        <linearGradient id="bg-dance" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#500724" />
+          <stop offset="50%" stop-color="#9d174d" />
+          <stop offset="100%" stop-color="#4c0519" />
+        </linearGradient>
+        <radialGradient id="glow-dance" cx="50%" cy="25%" r="55%">
+          <stop offset="0%" stop-color="#fb7185" stop-opacity="0.6" />
+          <stop offset="100%" stop-color="#500724" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="800" height="400" fill="url(#bg-dance)" />
+      <rect width="800" height="400" fill="url(#glow-dance)" />
+      <!-- Spotlight cones -->
+      <polygon points="200,0 80,400 320,400" fill="#fb7185" fill-opacity="0.08" />
+      <polygon points="600,0 480,400 720,400" fill="#f43f5e" fill-opacity="0.08" />
+      <g transform="translate(360, 70)">
+        <circle cx="40" cy="40" r="44" fill="#9d174d" fill-opacity="0.8" stroke="#fb7185" stroke-width="2" />
+        <!-- Musical note as dance symbol -->
+        <circle cx="32" cy="54" r="6" fill="#ffffff" />
+        <circle cx="48" cy="48" r="6" fill="#ffffff" />
+        <line x1="38" y1="54" x2="38" y2="28" stroke="#ffffff" stroke-width="2.5" />
+        <line x1="54" y1="48" x2="54" y2="22" stroke="#ffffff" stroke-width="2.5" />
+        <line x1="38" y1="28" x2="54" y2="22" stroke="#ffffff" stroke-width="2.5" />
+      </g>
+      <text x="400" y="200" fill="#fff1f2" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="4" text-anchor="middle">DANCE &amp; PERFORMANCE</text>
+      <text x="400" y="230" fill="#fda4af" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">LIVE STAGE &amp; CHOREOGRAPHY</text>
+    </svg>
+  `),
+
+  // Charity / Fundraiser
+  charity: createSvgDataUri(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+      <defs>
+        <linearGradient id="bg-charity" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#064e3b" />
+          <stop offset="50%" stop-color="#065f46" />
+          <stop offset="100%" stop-color="#1e3a5f" />
+        </linearGradient>
+        <radialGradient id="glow-charity" cx="50%" cy="30%" r="55%">
+          <stop offset="0%" stop-color="#34d399" stop-opacity="0.5" />
+          <stop offset="100%" stop-color="#064e3b" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="800" height="400" fill="url(#bg-charity)" />
+      <rect width="800" height="400" fill="url(#glow-charity)" />
+      <!-- Radiating circles -->
+      <circle cx="400" cy="200" r="80" fill="none" stroke="#34d399" stroke-width="1.5" stroke-opacity="0.3" />
+      <circle cx="400" cy="200" r="140" fill="none" stroke="#34d399" stroke-width="1" stroke-opacity="0.2" />
+      <circle cx="400" cy="200" r="200" fill="none" stroke="#34d399" stroke-width="1" stroke-opacity="0.1" />
+      <g transform="translate(360, 70)">
+        <circle cx="40" cy="40" r="44" fill="#047857" fill-opacity="0.8" stroke="#34d399" stroke-width="2" />
+        <!-- Heart icon -->
+        <path d="M 40 54 Q 18 38 20 26 A 12 12 0 0 1 40 22 A 12 12 0 0 1 60 26 Q 62 38 40 54 Z" fill="#ffffff" />
+      </g>
+      <text x="400" y="200" fill="#ecfdf5" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="4" text-anchor="middle">CHARITY &amp; FUNDRAISER</text>
+      <text x="400" y="230" fill="#6ee7b7" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">COMMUNITY IMPACT EVENTS</text>
+    </svg>
+  `),
+
+  // Film / Cinema
+  film: createSvgDataUri(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+      <defs>
+        <linearGradient id="bg-film" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#0c0a09" />
+          <stop offset="50%" stop-color="#1c1917" />
+          <stop offset="100%" stop-color="#1e1b4b" />
+        </linearGradient>
+        <radialGradient id="glow-film" cx="50%" cy="30%" r="55%">
+          <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.45" />
+          <stop offset="100%" stop-color="#0c0a09" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="800" height="400" fill="url(#bg-film)" />
+      <rect width="800" height="400" fill="url(#glow-film)" />
+      <!-- Film strip left -->
+      <g fill="#292524" stroke="#fbbf24" stroke-width="1.5" stroke-opacity="0.5">
+        <rect x="30" y="50" width="60" height="300" />
+        <rect x="38" y="60" width="44" height="30" fill="#44403c" />
+        <rect x="38" y="110" width="44" height="30" fill="#44403c" />
+        <rect x="38" y="160" width="44" height="30" fill="#44403c" />
+        <rect x="38" y="210" width="44" height="30" fill="#44403c" />
+        <rect x="38" y="260" width="44" height="30" fill="#44403c" />
+        <rect x="38" y="310" width="44" height="30" fill="#44403c" />
+      </g>
+      <!-- Film strip right -->
+      <g fill="#292524" stroke="#fbbf24" stroke-width="1.5" stroke-opacity="0.5">
+        <rect x="710" y="50" width="60" height="300" />
+        <rect x="718" y="60" width="44" height="30" fill="#44403c" />
+        <rect x="718" y="110" width="44" height="30" fill="#44403c" />
+        <rect x="718" y="160" width="44" height="30" fill="#44403c" />
+        <rect x="718" y="210" width="44" height="30" fill="#44403c" />
+        <rect x="718" y="260" width="44" height="30" fill="#44403c" />
+        <rect x="718" y="310" width="44" height="30" fill="#44403c" />
+      </g>
+      <g transform="translate(360, 70)">
+        <rect x="0" y="0" width="80" height="80" rx="18" fill="#292524" fill-opacity="0.9" stroke="#fbbf24" stroke-width="2" />
+        <!-- Clapperboard icon -->
+        <rect x="16" y="30" width="48" height="36" rx="4" fill="none" stroke="#ffffff" stroke-width="2.5" />
+        <rect x="16" y="22" width="48" height="12" rx="4" fill="#fbbf24" fill-opacity="0.9" />
+        <line x1="28" y1="22" x2="24" y2="34" stroke="#292524" stroke-width="2" />
+        <line x1="40" y1="22" x2="36" y2="34" stroke="#292524" stroke-width="2" />
+        <line x1="52" y1="22" x2="48" y2="34" stroke="#292524" stroke-width="2" />
+      </g>
+      <text x="400" y="200" fill="#fef3c7" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="800" letter-spacing="4" text-anchor="middle">FILM &amp; CINEMA</text>
+      <text x="400" y="230" fill="#fbbf24" font-family="monospace" font-size="12" font-weight="600" letter-spacing="3" text-anchor="middle">SCREENINGS &amp; FESTIVALS</text>
+    </svg>
+  `),
+
   // Default Fallback
   default: createSvgDataUri(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
@@ -369,8 +585,7 @@ CATEGORY_SVGS.soccer = CATEGORY_SVGS.football;
 CATEGORY_SVGS.stadium = CATEGORY_SVGS.stadium_tours;
 CATEGORY_SVGS.concert = CATEGORY_SVGS.music;
 CATEGORY_SVGS.festival = CATEGORY_SVGS.music;
-CATEGORY_SVGS.conference = CATEGORY_SVGS.tech;
-CATEGORY_SVGS.hackathon = CATEGORY_SVGS.tech;
+CATEGORY_SVGS.conference = CATEGORY_SVGS.hackathon;
 CATEGORY_SVGS.technology = CATEGORY_SVGS.tech;
 CATEGORY_SVGS.coding = CATEGORY_SVGS.tech;
 CATEGORY_SVGS.ai = CATEGORY_SVGS.tech;
@@ -381,6 +596,20 @@ CATEGORY_SVGS.art = CATEGORY_SVGS.arts;
 CATEGORY_SVGS.drinks = CATEGORY_SVGS.food;
 CATEGORY_SVGS.dining = CATEGORY_SVGS.food;
 CATEGORY_SVGS.culinary = CATEGORY_SVGS.food;
+// New category aliases
+CATEGORY_SVGS.wellness = CATEGORY_SVGS.fitness;
+CATEGORY_SVGS.yoga = CATEGORY_SVGS.fitness;
+CATEGORY_SVGS.marathon = CATEGORY_SVGS.fitness;
+CATEGORY_SVGS.networking = CATEGORY_SVGS.conference;
+CATEGORY_SVGS.meetup = CATEGORY_SVGS.hackathon;
+CATEGORY_SVGS.kids = CATEGORY_SVGS.charity;
+CATEGORY_SVGS.family = CATEGORY_SVGS.charity;
+CATEGORY_SVGS.esports = CATEGORY_SVGS.gaming;
+CATEGORY_SVGS.cinema = CATEGORY_SVGS.film;
+CATEGORY_SVGS.movie = CATEGORY_SVGS.film;
+CATEGORY_SVGS.fundraiser = CATEGORY_SVGS.charity;
+CATEGORY_SVGS.ballet = CATEGORY_SVGS.dance;
+CATEGORY_SVGS.performance = CATEGORY_SVGS.dance;
 
 /**
  * Returns an instant, self-contained SVG Data URI visual for the given category.

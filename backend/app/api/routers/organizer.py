@@ -194,3 +194,48 @@ def update_operations_checklist(
     db.commit()
     db.refresh(checklist)
     return checklist
+
+
+from pydantic import BaseModel
+
+
+class CheckInPayload(BaseModel):
+    qr_token: str
+
+
+@router.post("/events/{event_id}/check-in")
+def check_in_ticket(
+    event_id: int,
+    payload: CheckInPayload,
+    current_user: User = Depends(organizer_or_admin),
+    db: Session = Depends(get_db),
+):
+    """Event Operations Agent: scan and validate attendee QR ticket token at venue checkpoint."""
+    event = _get_owned_event(db, event_id, current_user)
+    from app.utils.ids import verify_qr_token
+
+    if not verify_qr_token(payload.qr_token, expected_event_id=event.id):
+        raise HTTPException(status_code=400, detail="Invalid QR code token or event mismatch")
+
+    booking = db.query(Booking).filter(Booking.qr_code == payload.qr_token, Booking.event_id == event.id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="No active booking found matching this QR code")
+
+    db.add(
+        AgentLog(
+            agent_name="event_operations_agent",
+            action_type="ticket_verified",
+            related_entity_id=event.id,
+            message=f"Attendee ticket verified (Booking #{booking.id}, Quantity: {booking.quantity}) for event '{event.title}'",
+        )
+    )
+    db.commit()
+    return {
+        "valid": True,
+        "status": "CHECKED_IN",
+        "booking_id": booking.id,
+        "quantity": booking.quantity,
+        "attendee_id": booking.user_id,
+        "event_title": event.title,
+        "message": f"Verified successfully! Admitted {booking.quantity} attendee(s).",
+    }

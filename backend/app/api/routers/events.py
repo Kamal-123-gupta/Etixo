@@ -24,7 +24,7 @@ def list_events(
     state: str | None = None,
     max_price: float | None = None,
     include_past: bool = False,
-    limit: int = Query(default=20, le=100),
+    limit: int = Query(default=50, le=1000),
     offset: int = 0,
     db: Session = Depends(get_db),
 ):

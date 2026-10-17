@@ -13,16 +13,16 @@ platform described in the root `README.md`.
 | Marketing Campaign Agent | ✅ Matches | Generates channel copy (WhatsApp/Email/X) and simulates a send with reach + engagement numbers |
 | Dynamic Pricing & Promotion Agent | ✅ Matches | Rule-based demand-tier reclassification + price adjustment, triggered on every booking; price-lock quotes |
 | Customer Support Agent | ✅ Matches | Rule-based intent handling (refund/QR/pricing/fraud/escalation) with LLM fallback for open-ended queries |
-| Fraud Detection Agent | ✅ Matches | Rule-based screening (bulk quantity, flagged names, test-card fingerprints) before every booking is confirmed |
+| Fraud Detection Agent | ✅ Matches + ML | Unsupervised Isolation Forest ML anomaly detection model + rule-based guards & continuous risk scoring |
 | Organizer Intelligence Agent | ✅ Matches | Revenue/tickets-sold aggregation + sales velocity + rule-based recommendation per event |
-| Event Operations Agent | ✅ Matches | Per-event readiness checklist (venue/QR/payment/reminders) with a computed readiness score; QR activation logged at booking time |
+| Event Operations Agent | ✅ Matches + Gate Scanner | Per-event readiness checklist + cryptographic signed QR ticketing + gate check-in scanning endpoint |
 
 All 9 agents are real backend modules under `app/agents/`, wired into the
-API and covered by tests (53 passing). None use a trained ML model beyond
-the pre-existing content-based recommender — the GenAI agents (Event
-Creation, Marketing, Support) use a pluggable LLM client (Anthropic, with
-a deterministic template fallback so they work with zero config); Pricing,
-Fraud, and Operations stay rule-based/direct-execution, matching the
+API and covered by tests (54 passing). Event Discovery Agent features hybrid
+semantic vector retrieval; Fraud Detection Agent runs a trained Scikit-Learn
+Isolation Forest anomaly detection model; Operations Agent features cryptographic
+signed QR ticketing and check-in validation.
+
 approach the root README specifies for each agent.
 
 **What's still genuinely open**, consistent with the root README's own
