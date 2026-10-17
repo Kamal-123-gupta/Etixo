@@ -448,10 +448,12 @@ uvicorn app.main:app --reload
 ```
 API docs at `http://localhost:8000/docs`.
 
-### Full stack via Docker Compose (backend `Dockerfile` implemented; Compose file still proposed)
+### Full stack via Docker Compose (PostgreSQL 16 + FastAPI + Vite Frontend)
 ```bash
 docker compose up --build
 ```
+API runs on `http://localhost:8000`, Frontend on `http://localhost:3000` (or `5173` locally), PostgreSQL on port `5432`.
+
 ## Environment Variables
 
 **Frontend (`.env` at repo root, Vite-prefixed):**
